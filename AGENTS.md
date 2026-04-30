@@ -264,12 +264,12 @@ CMD ["sh", "-c", "node scripts/init.js && node scripts/seed.js && node app/serve
 ### 02-injection/02-xss（XSS / Stored XSS）
 
 - 記事へのコメント表示機能
-- **問題コード：** `hono/html` の自動エスケープを `raw(comment.body)` で意図的にバイパスしている（ユーザー入力をそのまま HTML として出力）
+- **問題コード：** 新着バッジ（`<span>[New]</span>`）を文字列結合（`+`）でコメント本文に prepend し、まとめて `raw()` で描画している。バッジを HTML として描画したいために `raw()` を使うことが、結果としてユーザー入力のエスケープも外してしまう典型的な失敗パターン
 - **課題：**
   - `<script>` タグや `<img onerror>` で XSS が起きることを確認
-  - `raw()` を外して自動エスケープを効かせる
+  - 文字列結合をやめ、タグ付きテンプレート `` html`...` `` で構造ごと組み立てる形に修正（`<span>` はテンプレート内に直接書き、`comment.body` は `${...}` で渡してエスケープを効かせる）
   - 入力時のサニタイズより **出力時のエスケープ** が原則であることを理解
-  - 発展：記事本文の Markdown レンダリング（`marked.parse()` + `raw()`）にも同種のリスクがあることを扱う
+- **スコープ外（対策済み）：** 記事本文の `marked.parse()` + `raw()` も理屈上は XSS リスクがあるが、各章の `articles.js` 冒頭で `marked.use({ renderer: { html: () => '' } })` を設定して Markdown 内の生 HTML を無効化済み。本章では扱わない
 
 ### 02-injection/03-command-injection（コマンドインジェクション）
 

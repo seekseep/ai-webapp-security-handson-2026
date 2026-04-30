@@ -5,6 +5,8 @@ import db from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { layout } from '../components/layout.js';
 
+marked.use({ renderer: { html: () => '' } });
+
 const app = new Hono();
 
 // 記事一覧
@@ -167,15 +169,20 @@ app.get('/:id', (c) => {
 
     <section class="comments">
       <h3>コメント (${comments.length})</h3>
-      ${comments.map((comment) => html`
-        <div class="comment">
-          <strong>${comment.user_name}</strong>
-          <time>${comment.created_at}</time>
-          <!-- TODO: ここを修正してみよう -->
-          <!-- raw() で囲っているとユーザー入力に含まれる HTML/スクリプトがそのまま埋め込まれる -->
-          <p>${raw(comment.body)}</p>
-        </div>
-      `)}
+      ${comments.map((comment) => {
+        const isNew = new Date(comment.created_at) > new Date(Date.now() - 5 * 60 * 1000);
+        const body = isNew ? (
+          '<span style="color: red; font-weight: bold;">[New] </span>' + comment.body
+        ) : '' + comment.body
+
+        return html`
+          <div class="comment">
+            <strong>${comment.user_name}</strong>
+            <time>${comment.created_at}</time>
+            <p>${raw(body)}</p>
+          </div>
+        `
+      })}
 
       ${user
         ? html`

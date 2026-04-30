@@ -5,6 +5,8 @@ import db from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { layout } from '../components/layout.js';
 
+marked.use({ renderer: { html: () => '' } });
+
 const app = new Hono();
 
 const LIMIT_MIN = 1;

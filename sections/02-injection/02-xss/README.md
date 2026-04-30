@@ -34,7 +34,7 @@ npm run dev             # 開発サーバー起動（ファイル変更で自動
 
 | ファイル | 問題 |
 |---|---|
-| `app/routes/articles.js` | コメント表示で `raw()` を使ってユーザー入力を直接 HTML として出力している（Stored XSS） |
+| `app/routes/articles.js` | 新着バッジ表示のために HTML を文字列結合し、ユーザー入力ごと `raw()` で描画している（Stored XSS） |
 
 ## ディレクトリ構成・技術構成
 
