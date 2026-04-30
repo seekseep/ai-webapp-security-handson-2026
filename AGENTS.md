@@ -256,11 +256,10 @@ CMD ["sh", "-c", "node scripts/init.js && node scripts/seed.js && node app/serve
 
 - ナレッジ共有ツールのログイン画面
 - **問題コード：** SQL を文字列連結（テンプレートリテラル）で組み立てている
-- **問題コード：** パスワードを **平文** で保存している（`scripts/seed.js` も平文）
 - **課題：**
   - SQL インジェクションでログインを突破できることを確認（`' OR '1'='1' --`）
   - プレースホルダ（`?` バインド）を使って修正
-  - パスワードを `hashPassword` / `verifyPassword` でハッシュ化する形に修正
+- **スコープ外（意図的）：** パスワードハッシュ化はこの章では扱わない。`scripts/seed.js` のパスワードは平文のままだが、本章のテーマは SQLi に限定する（パスワード保存の問題は別章で扱う）。`app/lib/password.js` も置かない
 
 ### 02-injection/02-xss（XSS / Stored XSS）
 
