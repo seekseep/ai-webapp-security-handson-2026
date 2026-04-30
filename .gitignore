@@ -1,0 +1,12 @@
+node_modules/
+
+# SQLite データベースファイル（実行時に生成される）
+data/database.sqlite
+data/database.sqlite-shm
+data/database.sqlite-wal
+
+# OS / エディタ
+.DS_Store
+.vscode/
+.idea/
+*.log

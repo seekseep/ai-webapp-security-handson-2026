@@ -1,0 +1,57 @@
+# 02-01 - SQL インジェクション
+
+ナレッジ共有ツールの **ログイン機能** に SQL インジェクションの脆弱性が仕込まれているサンプルアプリです。脆弱性を体験してから、コードを修正するまでがこの章の課題です。
+
+レクチャーの内容は [LECTURE.md](./LECTURE.md) を参照してください。
+
+## 起動方法
+
+### Docker の場合
+
+```bash
+docker compose up --build
+```
+
+### ローカル Node.js の場合
+
+```bash
+npm install
+npm run database:init   # テーブル作成
+npm run database:seed   # 初期データ投入
+npm run dev             # 開発サーバー起動（ファイル変更で自動再起動）
+```
+
+ブラウザで http://localhost:3000 にアクセスしてください。
+
+## アカウント
+
+シードデータには以下のユーザーが含まれます（合計30人）。**この章では学習用にパスワードを平文で保存しています**（修正対象のひとつ）。
+
+| メールアドレス | パスワード | ロール |
+|---|---|---|
+| admin@example.com | admin123 | 管理者 |
+| tanaka@example.com | password | 一般ユーザー |
+| suzuki@example.com | password | 一般ユーザー |
+| user1@example.com 〜 user27@example.com | password | 一般ユーザー |
+
+## この章で問題のあるファイル
+
+| ファイル | 問題 |
+|---|---|
+| `app/routes/auth.js` | ログイン処理で SQL を文字列連結で組み立てている |
+| `app/routes/auth.js` | 新規登録でパスワードを平文のまま保存している |
+| `scripts/seed.js` | シードデータも平文パスワード |
+
+修正箇所には `// TODO:` コメントを入れています。
+
+## ディレクトリ構成・技術構成
+
+[01-environment/README.md](../../01-environment/README.md) と同じ構成です。アプリ本体・スクリプト・データの配置はそちらを参照してください。
+
+## npm scripts
+
+| コマンド | 説明 |
+|---|---|
+| `npm run dev` | 開発サーバーを起動（`node --watch` で自動再起動） |
+| `npm run database:init` | テーブルを作成 |
+| `npm run database:seed` | シードデータを投入（既存データは削除して再投入） |

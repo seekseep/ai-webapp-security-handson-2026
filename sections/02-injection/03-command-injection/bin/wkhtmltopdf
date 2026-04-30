@@ -1,0 +1,29 @@
+#!/bin/bash
+# モック版 wkhtmltopdf
+# 本物の wkhtmltopdf の代わりに、ハンズオン用に簡易な「PDF っぽいファイル」を生成します。
+# 実際の PDF ではありませんが、ブラウザでは "application/pdf" としてダウンロードされます。
+#
+# 使い方: wkhtmltopdf <input.html> <output.pdf>
+
+INPUT="$1"
+OUTPUT="$2"
+
+if [ -z "$INPUT" ] || [ -z "$OUTPUT" ]; then
+  echo "Usage: wkhtmltopdf <input.html> <output.pdf>" >&2
+  exit 1
+fi
+
+# 簡易的な PDF データ風のファイルを書き出す（実際のバイナリ PDF ではない）
+{
+  echo "%PDF-1.4 (mock by ハンズオン)"
+  echo ""
+  echo "Source HTML: $INPUT"
+  echo "Generated at: $(date)"
+  echo ""
+  if [ -f "$INPUT" ]; then
+    echo "----- 元の HTML の先頭 -----"
+    head -c 500 "$INPUT"
+  fi
+  echo ""
+  echo "%%EOF"
+} > "$OUTPUT"
