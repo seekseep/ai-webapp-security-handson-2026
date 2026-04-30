@@ -14,7 +14,12 @@ import { layout } from '../components/layout.js';
 
 const execAsync = promisify(exec);
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const WKHTMLTOPDF = resolve(__dirname, '..', '..', 'bin', 'wkhtmltopdf');
+
+// Node 慣習 (win32 / x64) を Go 慣習 (windows / amd64) に揃える
+const goos = process.platform === 'win32' ? 'windows' : process.platform;
+const goarch = process.arch === 'x64' ? 'amd64' : process.arch;
+const ext = process.platform === 'win32' ? '.exe' : '';
+const WKHTMLTOPDF = resolve(__dirname, '..', '..', 'bin', `wkhtmltopdf-${goos}-${goarch}${ext}`);
 
 const app = new Hono();
 
