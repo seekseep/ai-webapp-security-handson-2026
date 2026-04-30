@@ -207,7 +207,8 @@ CMD ["sh", "-c", "node scripts/init.js && node scripts/seed.js && node app/serve
 
 - 各章には **あえて問題のあるコード** を含める（学習用）
 - 問題は `app/routes/*.js` や `scripts/seed.js` など、参加者が読みそうなファイルに配置する
-- コメントには **問題の概要** だけ書き、答えは LECTURE.md に書く
+- 修正対象の箇所に `// TODO:` などのヒントコメントを入れない（学習者が自力で見つけられるようにするため）
+- 問題のあるファイル一覧は各章の README、修正手順は LECTURE.md に書く
 
 ### セキュリティ上の注意
 
