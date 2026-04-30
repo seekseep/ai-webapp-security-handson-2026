@@ -1,0 +1,52 @@
+# 03-02 - 不十分な認証
+
+ログイン状態を **クライアント側 Cookie の値だけ** で判定しているサンプルアプリです。Cookie を書き換えるだけで他人になりすませるため、攻撃を体験してから、サーバーサイドセッション方式に修正するまでがこの章の課題です。
+
+レクチャーの内容は [LECTURE.md](./LECTURE.md) を参照してください。
+
+## 起動方法
+
+### Docker の場合
+
+```bash
+docker compose up --build
+```
+
+### ローカル Node.js の場合
+
+```bash
+npm install
+npm run database:init   # テーブル作成
+npm run database:seed   # 初期データ投入
+npm run dev             # 開発サーバー起動（ファイル変更で自動再起動）
+```
+
+ブラウザで http://localhost:3000 にアクセスしてください。
+
+## アカウント
+
+シードデータには以下のユーザーが含まれます。
+
+| メールアドレス | パスワード | ロール |
+|---|---|---|
+| admin@example.com | admin123 | 管理者 |
+| tanaka@example.com | password | 一般ユーザー |
+
+## この章で問題のあるファイル
+
+| ファイル | 問題 |
+|---|---|
+| `app/middleware/session.js` | サーバー側にストアを持たず、`user_id` Cookie の値をそのまま信用している |
+| `app/routes/auth.js` | ログイン成功時に `session.userId` 経由で書き換え可能な Cookie を発行している |
+
+## ディレクトリ構成・技術構成
+
+[01-environment/01-environment/README.md](../../01-environment/01-environment/README.md) と同じ構成です。アプリ本体・スクリプト・データの配置はそちらを参照してください。
+
+## npm scripts
+
+| コマンド | 説明 |
+|---|---|
+| `npm run dev` | 開発サーバーを起動（`node --watch` で自動再起動） |
+| `npm run database:init` | テーブルを作成 |
+| `npm run database:seed` | シードデータを投入（既存データは削除して再投入） |

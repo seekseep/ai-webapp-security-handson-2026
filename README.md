@@ -2,15 +2,24 @@
 
 Web アプリケーションのセキュリティ／パフォーマンスを **手を動かして学ぶ** ハンズオンリポジトリです。
 
-各章のディレクトリには **意図的に問題が仕込まれた** Web アプリが入っています。アプリを起動して問題を体験し、コードを読んで原因を見つけ、修正するまでが各章の流れです。
+各レクチャーのディレクトリには **意図的に問題が仕込まれた** Web アプリが入っています。アプリを起動して問題を体験し、コードを読んで原因を見つけ、修正するまでが各レクチャーの流れです。
 
 ## 対象者
 
 AI を使って Web アプリを作れるようにはなったが、生成されたコードの中身や安全性に不安がある初学者〜中級者。
 
+## 用語：セクションとレクチャー
+
+教材は2階層で整理しています。
+
+- **セクション** — テーマで束ねた親ディレクトリ（`02-injection/`, `03-auth/`, `04-performance/` など）
+- **レクチャー** — 1つのハンズオン単位＝1つの動くアプリ（`02-injection/01-sqli/` など）
+
+学習者はレクチャー単位でディレクトリに移動し、その `LECTURE.md` に沿って手を動かします。
+
 ## 技術スタック
 
-すべての章は同じ最小スタックで動きます。
+すべてのレクチャーは同じ最小スタックで動きます。
 
 | 分類 | 採用技術 |
 |---|---|
@@ -23,46 +32,63 @@ AI を使って Web アプリを作れるようにはなったが、生成され
 | 開発支援 | `node --watch` |
 | コンテナ | Docker / Docker Compose |
 
-すべての章で **社内ナレッジ共有ツール** を題材にします。各章は同じドメインの異なる機能・画面を扱います。
+すべてのレクチャーで **社内ナレッジ共有ツール** を題材にします。各レクチャーは同じドメインの異なる機能・画面を扱います。
 
-## 章の構成
+## セクションとレクチャーの一覧
 
-| 章 | テーマ |
+### 01-environment — 環境構築
+
+| レクチャー | テーマ |
 |---|---|
-| [01-environment/01-environment](./sections/01-environment/01-environment/) | 環境構築・全体像の把握 |
-| [02-injection/01-sqli](./sections/02-injection/01-sqli/) | SQL インジェクション |
-| 02-injection/02-xss | XSS（Stored XSS） |
-| 02-injection/03-command-injection | コマンドインジェクション |
-| 03-auth/01-no-authentication | 認証なし |
-| 03-auth/02-weak-authentication | 不十分な認証 |
-| 03-auth/03-broken-authorization | 不十分な認可 |
-| 04-performance/01-n-plus-one | N+1 問題 |
-| 04-performance/02-large-data | 大量データ |
-| 04-performance/03-cache | キャッシュ |
+| [01-environment](./sections/01-environment/01-environment/) | 環境構築・全体像の把握 |
 
-各章の作成状況は [TODO.md](./TODO.md) で管理しています。
+### 02-injection — インジェクション
+
+| レクチャー | テーマ |
+|---|---|
+| [01-sqli](./sections/02-injection/01-sqli/) | SQL インジェクション |
+| [02-xss](./sections/02-injection/02-xss/) | XSS（Stored XSS） |
+| [03-command-injection](./sections/02-injection/03-command-injection/) | コマンドインジェクション |
+
+### 03-auth — 認証・認可
+
+| レクチャー | テーマ |
+|---|---|
+| [01-no-authentication](./sections/03-auth/01-no-authentication/) | 認証なし |
+| [02-weak-authentication](./sections/03-auth/02-weak-authentication/) | 不十分な認証 |
+| [03-broken-authorization](./sections/03-auth/03-broken-authorization/) | 不十分な認可 |
+
+### 04-performance — パフォーマンス
+
+| レクチャー | テーマ |
+|---|---|
+| [01-n-plus-one](./sections/04-performance/01-n-plus-one/) | N+1 問題 |
+| [02-large-data](./sections/04-performance/02-large-data/) | 大量データ |
+| [03-cache](./sections/04-performance/03-cache/) | キャッシュ |
+
+各レクチャーの作成状況は [TODO.md](./TODO.md) で管理しています。
 
 ## 進め方
 
 1. このリポジトリをクローン
-2. 各章のディレクトリ（例: `sections/01-environment/01-environment/`）に移動
-3. その章の **`README.md`** で起動方法・前提を確認
-4. その章の **`LECTURE.md`** に書かれている TODO を順番に進める
-5. 終わったら次の章へ
+2. 取り組むレクチャーのディレクトリ（例: `sections/01-environment/01-environment/`）に移動
+3. そのレクチャーの **`README.md`** で起動方法・前提を確認
+4. そのレクチャーの **`LECTURE.md`** に書かれている TODO を順番に進める
+5. 終わったら次のレクチャーへ
 
-各章は独立した npm プロジェクトとして動作します（`package.json` が章ごとにあります）。
+各レクチャーは独立した npm プロジェクトとして動作します（`package.json` がレクチャーごとにあります）。
 
-## 各章のディレクトリ構成（雛形）
+## 各レクチャーのディレクトリ構成（雛形）
 
-すべての章は以下の構成で統一されています。
+すべてのレクチャーは以下の構成で統一されています。
 
 ```
-sections/<chapter>/
+sections/<section>/<lecture>/
 ├── package.json
 ├── Dockerfile
 ├── docker-compose.yml
 ├── README.md           プロジェクト説明（起動方法・構成）
-├── LECTURE.md          レクチャー（TODO / 学ぶこと / 説明）
+├── LECTURE.md          レクチャー本文（TODO / 学ぶこと / 説明）
 ├── app/                アプリケーション本体
 │   ├── server.js
 │   ├── db.js
@@ -80,7 +106,7 @@ sections/<chapter>/
 
 ## 共通の起動コマンド
 
-各章のディレクトリに移動してから、以下のいずれかで起動します。
+各レクチャーのディレクトリに移動してから、以下のいずれかで起動します。
 
 ### Docker
 
@@ -102,5 +128,5 @@ npm run dev             # 開発サーバー起動
 ## ライセンス・注意事項
 
 - 学習用リポジトリです。本番環境にデプロイしないでください
-- 一部の章には **意図的にセキュリティ脆弱性** が含まれています
+- 一部のレクチャーには **意図的にセキュリティ脆弱性** が含まれています
 - 修正前のコードを実環境に流用するのは絶対に避けてください

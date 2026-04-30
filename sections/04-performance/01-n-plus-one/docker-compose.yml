@@ -1,0 +1,12 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_PATH=/workspace/data/database.sqlite
+    volumes:
+      - ./app:/workspace/app
+      - ./scripts:/workspace/scripts
+      - ./data:/workspace/data
+      - /workspace/node_modules
