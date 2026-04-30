@@ -17,7 +17,7 @@ app.get('/login', (c) => {
       ${error ? html`<p class="error">${error}</p>` : ''}
       <form method="POST" action="/auth/login">
         <label for="email">メールアドレス</label>
-        <input type="email" id="email" name="email" required />
+        <input type="text" id="email" name="email" required />
         <label for="password">パスワード</label>
         <input type="password" id="password" name="password" required />
         <button type="submit" class="btn">ログイン</button>
