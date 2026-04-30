@@ -92,7 +92,56 @@ await execFileAsync(WKHTMLTOPDF, [inputPath, outputPath]);
 
 これで `outputPath` に何が入っていても、**`wkhtmltopdf` の第2引数** という1つの値として扱われます。`;` を入れても **ファイル名のリテラル** として解釈されるだけで、別コマンドにはなりません。
 
-修正後にもう一度同じタイトルでエクスポートしてみてください。`/tmp/PWNED` は **作成されません**（`touch` は実行されない）。代わりに wkhtmltopdf が「変なファイル名で書こうとして失敗する」だけで終わります。
+#### 「シェルを介す／介さない」を OS の目線で見る
+
+「シェルを介さないとなぜ安全？」がイメージしづらいので、**OS から見える実際の実行内容** を `exec` / `execFile` で比べてみます。
+
+例として、`outputPath` に `output.pdf; touch /tmp/PWNED` が入ってきたとします。
+
+**`exec`（シェルあり）の場合**
+
+```js
+exec(`wkhtmltopdf ${inputPath} ${outputPath}`)
+```
+
+Node は内部で `/bin/sh -c` を起動し、組み立てた文字列をシェルに渡します。
+
+```sh
+/bin/sh -c "wkhtmltopdf input.html output.pdf; touch /tmp/PWNED"
+```
+
+シェルはこの文字列を **2つのコマンド** として解釈します。
+
+1. `wkhtmltopdf input.html output.pdf`
+2. `touch /tmp/PWNED`
+
+`;` が **コマンド区切り** として機能してしまうので、攻撃が成立します。
+
+**`execFile`（シェルなし）の場合**
+
+```js
+execFile("wkhtmltopdf", ["input.html", "output.pdf; touch /tmp/PWNED"])
+```
+
+Node はシェルを介さず、OS の `execve(2)` システムコールでプログラムを直接起動します。プログラムから見える `argv` は次の通り。
+
+```text
+argv[0]: wkhtmltopdf
+argv[1]: input.html
+argv[2]: output.pdf; touch /tmp/PWNED   ← まるごと1つの引数
+```
+
+`wkhtmltopdf` は `argv[2]` を **そのままファイル名として** 受け取ります。`;` は単なる文字列の一部にすぎず、コマンド区切りとして解釈する主体（シェル）がいません。
+
+| 項目 | `exec` | `execFile` |
+|---|---|---|
+| 実行方法 | `/bin/sh -c` 経由 | プログラムを直接起動 |
+| `;` の扱い | コマンド区切り | ただの文字 |
+| 攻撃成立 | する | しない |
+
+**「解釈されない」＝ その文字列をシェルが読むことがない**。これが `execFile` の本質です。
+
+修正後にもう一度同じタイトルでエクスポートしてみてください。`/tmp/PWNED` は **作成されません**（`touch` は実行されない）。代わりに wkhtmltopdf が「変なファイル名で書こうとして失敗する」だけで終わります（例: `Error: Cannot open file "output.pdf; touch /tmp/PWNED"`）。
 
 ### TODO 4: そもそも入力をファイル名に使わない（根本対策）
 
