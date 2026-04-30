@@ -29,8 +29,6 @@ npm run dev             # 開発サーバー起動（ファイル変更で自動
 |---|---|---|
 | admin@example.com | admin123 | 管理者 |
 | tanaka@example.com | password | 一般ユーザー |
-| suzuki@example.com | password | 一般ユーザー |
-| user1@example.com 〜 user27@example.com | password | 一般ユーザー |
 
 ## この章で問題のあるファイル
 
@@ -38,11 +36,9 @@ npm run dev             # 開発サーバー起動（ファイル変更で自動
 |---|---|
 | `app/routes/articles.js` | コメント表示で `raw()` を使ってユーザー入力を直接 HTML として出力している（Stored XSS） |
 
-修正箇所には `// TODO:` コメントを入れています。
-
 ## ディレクトリ構成・技術構成
 
-[01-environment/README.md](../../01-environment/README.md) と同じ構成です。アプリ本体・スクリプト・データの配置はそちらを参照してください。
+[01-environment/01-environment/README.md](../../01-environment/01-environment/README.md) と同じ構成です。アプリ本体・スクリプト・データの配置はそちらを参照してください。
 
 ## npm scripts
 

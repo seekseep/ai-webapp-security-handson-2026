@@ -36,8 +36,6 @@ npm run dev             # 開発サーバー起動（ファイル変更で自動
 |---|---|
 | `app/routes/articles.js` | PDF エクスポート時、記事タイトルをシェルコマンドに直接埋め込んでいる |
 
-修正箇所には `// TODO:` コメントを入れています。
-
 ## モック wkhtmltopdf
 
 実際の `wkhtmltopdf` はインストールが重いので、`bin/` に **Go で書いた小さなモックバイナリ** を置いています。固定内容の最小 PDF を 1 ページ出力するだけで、入力 HTML の内容は反映しません。コマンドインジェクションの挙動は実物と同じです。
@@ -79,7 +77,7 @@ done
 
 ## ディレクトリ構成・技術構成
 
-[01-environment/README.md](../../01-environment/README.md) と同じ構成です（加えて `bin/` 以下にプラットフォーム別のモック `wkhtmltopdf` バイナリがあります）。
+[01-environment/01-environment/README.md](../../01-environment/01-environment/README.md) と同じ構成です（加えて `bin/` 以下にプラットフォーム別のモック `wkhtmltopdf` バイナリがあります）。
 
 ## npm scripts
 

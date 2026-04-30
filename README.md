@@ -29,7 +29,7 @@ AI を使って Web アプリを作れるようにはなったが、生成され
 
 | 章 | テーマ |
 |---|---|
-| [01-environment](./sections/01-environment/) | 環境構築・全体像の把握 |
+| [01-environment/01-environment](./sections/01-environment/01-environment/) | 環境構築・全体像の把握 |
 | [02-injection/01-sqli](./sections/02-injection/01-sqli/) | SQL インジェクション |
 | 02-injection/02-xss | XSS（Stored XSS） |
 | 02-injection/03-command-injection | コマンドインジェクション |
@@ -45,7 +45,7 @@ AI を使って Web アプリを作れるようにはなったが、生成され
 ## 進め方
 
 1. このリポジトリをクローン
-2. 各章のディレクトリ（例: `sections/01-environment/`）に移動
+2. 各章のディレクトリ（例: `sections/01-environment/01-environment/`）に移動
 3. その章の **`README.md`** で起動方法・前提を確認
 4. その章の **`LECTURE.md`** に書かれている TODO を順番に進める
 5. 終わったら次の章へ

@@ -7,15 +7,43 @@ import { layout } from '../components/layout.js';
 
 const app = new Hono();
 
+const LIMIT_MIN = 1;
+const LIMIT_MAX = 100;
+const LIMIT_DEFAULT = 10;
+const MAX_VISIBLE_PAGES = 10;
+
 // 記事一覧
 app.get('/', (c) => {
   const user = c.get('user');
+
+  const limitParam = parseInt(c.req.query('limit') ?? '', 10);
+  const offsetParam = parseInt(c.req.query('offset') ?? '', 10);
+  const limit = Number.isFinite(limitParam) && limitParam >= LIMIT_MIN && limitParam <= LIMIT_MAX
+    ? limitParam
+    : LIMIT_DEFAULT;
+  const offset = Number.isFinite(offsetParam) && offsetParam >= 0 ? offsetParam : 0;
+
+  const total = db.prepare('SELECT COUNT(*) as count FROM articles').get().count;
   const articles = db.prepare(`
     SELECT articles.*, users.name as author_name
     FROM articles
     JOIN users ON articles.author_id = users.id
     ORDER BY articles.created_at DESC
-  `).all();
+    LIMIT ? OFFSET ?
+  `).all(limit, offset);
+
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const currentPage = Math.floor(offset / limit) + 1;
+  const prevOffset = Math.max(0, offset - limit);
+  const nextOffset = offset + limit;
+  const hasPrev = offset > 0;
+  const hasNext = nextOffset < total;
+
+  const half = Math.floor(MAX_VISIBLE_PAGES / 2);
+  let startPage = Math.max(1, currentPage - half);
+  const endPage = Math.min(totalPages, startPage + MAX_VISIBLE_PAGES - 1);
+  startPage = Math.max(1, endPage - MAX_VISIBLE_PAGES + 1);
+  const pages = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
 
   return c.html(layout('記事一覧', user, html`
     <div class="page-header">
@@ -30,6 +58,21 @@ app.get('/', (c) => {
           <span class="meta">${a.author_name} / ${a.created_at}</span>
         </div>
       `)}
+    <nav class="pagination" aria-label="ページネーション">
+      ${hasPrev
+        ? html`<a href="/articles?limit=${limit}&offset=${prevOffset}" class="pagination-link">前へ</a>`
+        : html`<span class="pagination-link is-disabled">前へ</span>`}
+      ${pages.map((page) => {
+        const pageOffset = (page - 1) * limit;
+        return page === currentPage
+          ? html`<span class="pagination-link is-current" aria-current="page">${page}</span>`
+          : html`<a href="/articles?limit=${limit}&offset=${pageOffset}" class="pagination-link">${page}</a>`;
+      })}
+      ${hasNext
+        ? html`<a href="/articles?limit=${limit}&offset=${nextOffset}" class="pagination-link">次へ</a>`
+        : html`<span class="pagination-link is-disabled">次へ</span>`}
+    </nav>
+    <p class="pagination-summary">${total === 0 ? 0 : offset + 1}-${Math.min(offset + limit, total)} / ${total}</p>
   `));
 });
 

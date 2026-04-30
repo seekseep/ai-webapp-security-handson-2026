@@ -25,14 +25,12 @@ npm run dev             # 開発サーバー起動（ファイル変更で自動
 
 ## アカウント
 
-シードデータには以下のユーザーが含まれます（合計30人）。**この章では学習用にパスワードを平文で保存しています**（修正対象のひとつ）。
+シードデータには以下のユーザーが含まれます。**この章では学習用にパスワードを平文で保存しています**（修正対象のひとつ）。
 
 | メールアドレス | パスワード | ロール |
 |---|---|---|
 | admin@example.com | admin123 | 管理者 |
 | tanaka@example.com | password | 一般ユーザー |
-| suzuki@example.com | password | 一般ユーザー |
-| user1@example.com 〜 user27@example.com | password | 一般ユーザー |
 
 ## この章で問題のあるファイル
 
@@ -42,11 +40,9 @@ npm run dev             # 開発サーバー起動（ファイル変更で自動
 | `app/routes/auth.js` | 新規登録でパスワードを平文のまま保存している |
 | `scripts/seed.js` | シードデータも平文パスワード |
 
-修正箇所には `// TODO:` コメントを入れています。
-
 ## ディレクトリ構成・技術構成
 
-[01-environment/README.md](../../01-environment/README.md) と同じ構成です。アプリ本体・スクリプト・データの配置はそちらを参照してください。
+[01-environment/01-environment/README.md](../../01-environment/01-environment/README.md) と同じ構成です。アプリ本体・スクリプト・データの配置はそちらを参照してください。
 
 ## npm scripts
 

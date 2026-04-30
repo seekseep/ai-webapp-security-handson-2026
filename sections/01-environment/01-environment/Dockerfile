@@ -5,4 +5,4 @@ COPY package*.json ./
 RUN npm install
 COPY app ./app
 COPY scripts ./scripts
-CMD ["sh", "-c", "node scripts/init.js && node scripts/seed.js && node app/server.js"]
+CMD ["sh", "-c", "node scripts/init.js && node scripts/seed.js && node --watch app/server.js"]

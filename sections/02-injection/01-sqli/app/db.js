@@ -8,7 +8,4 @@ const __dirname = dirname(__filename);
 const dbPath = process.env.DB_PATH || join(__dirname, '..', 'data', 'database.sqlite');
 const db = new Database(dbPath);
 
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
-
 export default db;

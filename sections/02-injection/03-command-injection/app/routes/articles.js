@@ -164,9 +164,6 @@ app.get('/:id/export.pdf', async (c) => {
   `;
   await writeFile(inputPath, htmlContent);
 
-  // TODO: ここを修正してみよう
-  // 出力ファイル名に記事タイトル（ユーザー入力）をそのまま埋め込んでいる。
-  // タイトルに ; や " を含めると任意のコマンドが実行できてしまう（コマンドインジェクション）。
   const command = `${WKHTMLTOPDF} "${inputPath}" "${outputPath}"`;
   await execAsync(command);
 

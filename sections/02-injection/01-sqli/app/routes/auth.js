@@ -32,8 +32,6 @@ app.post('/login', async (c) => {
   const body = await c.req.parseBody();
   const { email, password } = body;
 
-  // TODO: ここを修正してみよう
-  // 文字列連結で SQL を組み立てているため、入力値次第でクエリ構造を書き換えられてしまう
   const query = `SELECT * FROM users WHERE email = '${email}' AND password = '${password}'`;
   const user = db.prepare(query).get();
 
@@ -84,7 +82,6 @@ app.post('/register', async (c) => {
     return c.redirect('/auth/register?error=このメールアドレスは既に登録されています');
   }
 
-  // TODO: パスワードを平文のまま保存している点も問題
   const result = db.prepare(
     'INSERT INTO users (name, email, password) VALUES (?, ?, ?)'
   ).run(name, email, password);
