@@ -42,9 +42,9 @@ app.get('/', (c) => {
   const hasNext = nextOffset < total;
 
   const half = Math.floor(MAX_VISIBLE_PAGES / 2);
-  let startPage = Math.max(1, currentPage - half);
-  const endPage = Math.min(totalPages, startPage + MAX_VISIBLE_PAGES - 1);
-  startPage = Math.max(1, endPage - MAX_VISIBLE_PAGES + 1);
+  const initialStartPage = Math.max(1, currentPage - half);
+  const endPage = Math.min(totalPages, initialStartPage + MAX_VISIBLE_PAGES - 1);
+  const startPage = Math.max(1, endPage - MAX_VISIBLE_PAGES + 1);
   const pages = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
 
   return c.html(layout('記事一覧', user, html`
