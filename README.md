@@ -12,8 +12,8 @@ AI を使って Web アプリを作れるようにはなったが、生成され
 
 教材は2階層で整理しています。
 
-- **セクション** — テーマで束ねた親ディレクトリ（`02-injection/`, `03-auth/`, `04-performance/` など）
-- **レクチャー** — 1つのハンズオン単位＝1つの動くアプリ（`02-injection/01-sqli/` など）
+- **セクション** — テーマで束ねた親ディレクトリ（`02-auth/`, `03-injection/`, `04-performance/` など）
+- **レクチャー** — 1つのハンズオン単位＝1つの動くアプリ（`03-injection/01-sqli/` など）
 
 学習者はレクチャー単位でディレクトリに移動し、その `LECTURE.md` に沿って手を動かします。
 
@@ -42,21 +42,21 @@ AI を使って Web アプリを作れるようにはなったが、生成され
 |---|---|
 | [01-environment](./sections/01-environment/01-environment/) | 環境構築・全体像の把握 |
 
-### 02-injection — インジェクション
+### 02-auth — 認証・認可
 
 | レクチャー | テーマ |
 |---|---|
-| [01-sqli](./sections/02-injection/01-sqli/) | SQL インジェクション |
-| [02-xss](./sections/02-injection/02-xss/) | XSS（Stored XSS） |
-| [03-command-injection](./sections/02-injection/03-command-injection/) | コマンドインジェクション |
+| [01-no-authentication](./sections/02-auth/01-no-authentication/) | 認証なし |
+| [02-weak-authentication](./sections/02-auth/02-weak-authentication/) | 不十分な認証 |
+| [03-broken-authorization](./sections/02-auth/03-broken-authorization/) | 不十分な認可 |
 
-### 03-auth — 認証・認可
+### 03-injection — インジェクション
 
 | レクチャー | テーマ |
 |---|---|
-| [01-no-authentication](./sections/03-auth/01-no-authentication/) | 認証なし |
-| [02-weak-authentication](./sections/03-auth/02-weak-authentication/) | 不十分な認証 |
-| [03-broken-authorization](./sections/03-auth/03-broken-authorization/) | 不十分な認可 |
+| [01-sqli](./sections/03-injection/01-sqli/) | SQL インジェクション |
+| [02-xss](./sections/03-injection/02-xss/) | XSS（Stored XSS） |
+| [03-command-injection](./sections/03-injection/03-command-injection/) | コマンドインジェクション |
 
 ### 04-performance — パフォーマンス
 

@@ -109,4 +109,4 @@ const profile = db.prepare(`SELECT ${cols} FROM users WHERE id = ?`).get(id);
 
 ## 次の章へ
 
-ここまでで認証・認可の章は一区切りです。次のセクション [04-performance/01-n-plus-one](../../04-performance/01-n-plus-one/) ではパフォーマンス問題（N+1 クエリ）に進みます。
+ここまでで認証・認可の章は一区切りです。次のセクション [03-injection/01-sqli](../../03-injection/01-sqli/) では SQL インジェクションに進みます。

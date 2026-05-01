@@ -1,5 +1,5 @@
 {
-  "name": "03-auth-02-weak-authentication",
+  "name": "02-auth-03-broken-authorization",
   "version": "1.0.0",
   "private": true,
   "type": "module",

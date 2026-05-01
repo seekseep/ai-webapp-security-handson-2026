@@ -10,21 +10,21 @@
 |---|---|---|
 | [01-environment](./sections/01-environment/01-environment/) | 環境構築・全体像の把握 | ✅ 用意済み |
 
-### 02-injection
+### 02-auth
 
 | レクチャー | テーマ | ステータス |
 |---|---|---|
-| [01-sqli](./sections/02-injection/01-sqli/) | SQL インジェクション | ✅ 用意済み |
-| [02-xss](./sections/02-injection/02-xss/) | XSS（Stored XSS） | ✅ 用意済み |
-| [03-command-injection](./sections/02-injection/03-command-injection/) | コマンドインジェクション | ✅ 用意済み |
+| [01-no-authentication](./sections/02-auth/01-no-authentication/) | 認証なし | ✅ 用意済み |
+| [02-weak-authentication](./sections/02-auth/02-weak-authentication/) | 不十分な認証 | ✅ 用意済み |
+| [03-broken-authorization](./sections/02-auth/03-broken-authorization/) | 不十分な認可 | ✅ 用意済み |
 
-### 03-auth
+### 03-injection
 
 | レクチャー | テーマ | ステータス |
 |---|---|---|
-| [01-no-authentication](./sections/03-auth/01-no-authentication/) | 認証なし | ✅ 用意済み |
-| [02-weak-authentication](./sections/03-auth/02-weak-authentication/) | 不十分な認証 | ✅ 用意済み |
-| [03-broken-authorization](./sections/03-auth/03-broken-authorization/) | 不十分な認可 | ✅ 用意済み |
+| [01-sqli](./sections/03-injection/01-sqli/) | SQL インジェクション | ✅ 用意済み |
+| [02-xss](./sections/03-injection/02-xss/) | XSS（Stored XSS） | ✅ 用意済み |
+| [03-command-injection](./sections/03-injection/03-command-injection/) | コマンドインジェクション | ✅ 用意済み |
 
 ### 04-performance
 

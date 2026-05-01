@@ -132,4 +132,4 @@ export function destroySession(c) {
 
 ## 次の章へ
 
-不十分な認証を直したら、次の章 [03-auth/03-broken-authorization](../03-broken-authorization/) に進みましょう。「認証は通ったけど他人のリソースにアクセスできてしまう」ケースを扱います。
+不十分な認証を直したら、次の章 [02-auth/03-broken-authorization](../03-broken-authorization/) に進みましょう。「認証は通ったけど他人のリソースにアクセスできてしまう」ケースを扱います。
