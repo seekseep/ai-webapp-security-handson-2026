@@ -135,6 +135,28 @@ npm run dev             # 開発サーバー起動
 
 ブラウザで http://localhost:3000 を開いてください。
 
+## スキーマを更新したとき（既存 DB を作り直す）
+
+`scripts/init.js` は `CREATE TABLE IF NOT EXISTS` を使っているため、**既存の sqlite ファイルが残っているとテーブル定義の更新は反映されません**。`npm run database:reset` も行を消すだけで、テーブル定義自体は変えません。
+
+リポジトリを更新してスキーマが変わったときは、各レクチャーの `data/database.sqlite*` を一度削除してから初期化をやり直してください。
+
+```bash
+# ローカル Node.js の場合
+rm -f data/database.sqlite data/database.sqlite-shm data/database.sqlite-wal
+npm run database:init
+npm run database:seed
+```
+
+```bash
+# Docker の場合
+docker compose down
+rm -f data/database.sqlite data/database.sqlite-shm data/database.sqlite-wal
+docker compose up --build
+docker compose exec app npm run database:init
+docker compose exec app npm run database:seed
+```
+
 ## ライセンス・注意事項
 
 - 学習用リポジトリです。本番環境にデプロイしないでください

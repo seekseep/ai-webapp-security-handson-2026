@@ -171,8 +171,11 @@ services:
     volumes:
       - ./app:/workspace/app
       - ./scripts:/workspace/scripts
-      - ./data:/workspace/data
+      - app-data:/workspace/data
       - /workspace/node_modules
+
+volumes:
+  app-data:
 ```
 
 ### Dockerfile の共通パターン
