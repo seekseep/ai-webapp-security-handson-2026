@@ -6,4 +6,4 @@ RUN npm install
 COPY app ./app
 COPY scripts ./scripts
 COPY bin/wkhtmltopdf-linux-amd64 bin/wkhtmltopdf-linux-arm64 ./bin/
-CMD ["sh", "-c", "node scripts/init.js && node scripts/seed.js && node app/server.js"]
+CMD ["node", "--watch", "app/server.js"]

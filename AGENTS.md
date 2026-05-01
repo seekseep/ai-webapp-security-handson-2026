@@ -110,7 +110,8 @@ app/
   "scripts": {
     "dev": "node --watch app/server.js",
     "database:init": "node scripts/init.js",
-    "database:seed": "node scripts/seed.js"
+    "database:seed": "node scripts/seed.js",
+    "database:reset": "node scripts/reset.js && node scripts/seed.js"
   },
   "dependencies": {
     "@hono/node-server": "^1.14.0",
@@ -124,7 +125,9 @@ app/
 ### scripts/ の責務分離
 
 - `scripts/init.js` — テーブル定義（`CREATE TABLE IF NOT EXISTS`）のみ
-- `scripts/seed.js` — シードデータ投入。冒頭で既存データを `DELETE` してから再投入し、何度実行しても同じ状態にする
+- `scripts/seed.js` — シードデータ投入。**冒頭で `users` テーブルの行数をチェックし、すでにデータがあればスキップ** する（追記式・非破壊）。空のときだけ初期データを INSERT
+- `scripts/reset.js` — 全テーブルの `DELETE` と `sqlite_sequence` のリセットだけを行う。投入はしない
+- 「全消ししてシードを入れ直す」フローは `npm run database:reset`（= `reset.js` → `seed.js`）でまとめて行う
 
 ### 起動方法（2通り）
 
@@ -134,7 +137,15 @@ app/
 docker compose up --build
 ```
 
-`init → seed → server` の順に自動実行される。
+サーバーだけが起動する（init / seed は **自動実行されない**）。**初回起動時** または DB を作り直したいときは、別ターミナルで以下を実行する。
+
+```bash
+docker compose exec app npm run database:init   # テーブル作成（初回のみ）
+docker compose exec app npm run database:seed   # 初期データ投入（追記式）
+docker compose exec app npm run database:reset  # 全消ししてシード再投入
+```
+
+DB ファイルはホスト側 `./data` に bind-mount されているので、`docker compose down` してもデータは消えない。
 
 **ローカル Node.js の場合：**
 
@@ -174,8 +185,10 @@ COPY package*.json ./
 RUN npm install
 COPY app ./app
 COPY scripts ./scripts
-CMD ["sh", "-c", "node scripts/init.js && node scripts/seed.js && node app/server.js"]
+CMD ["node", "--watch", "app/server.js"]
 ```
+
+`init` と `seed` は CMD に含めない。**コンテナ起動時にデータを毎回ゼロから作り直さない** ため。学習者が `docker compose exec app npm run database:init / :seed / :reset` を能動的に叩く運用にする。
 
 ### .gitignore に含めるもの
 

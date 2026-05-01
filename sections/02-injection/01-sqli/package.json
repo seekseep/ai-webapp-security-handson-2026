@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node --watch app/server.js",
     "database:init": "node scripts/init.js",
-    "database:seed": "node scripts/seed.js"
+    "database:seed": "node scripts/seed.js",
+    "database:reset": "node scripts/reset.js && node scripts/seed.js"
   },
   "dependencies": {
     "@hono/node-server": "^1.14.0",

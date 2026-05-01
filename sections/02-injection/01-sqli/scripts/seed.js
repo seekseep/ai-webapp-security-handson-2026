@@ -1,10 +1,12 @@
 import db from '../app/db.js';
 
-// 既存データを削除して seed を再実行可能にする
-db.exec('DELETE FROM comments');
-db.exec('DELETE FROM articles');
-db.exec('DELETE FROM users');
-db.exec("DELETE FROM sqlite_sequence WHERE name IN ('users', 'articles', 'comments')");
+// 既存データがあればスキップ（再実行を非破壊にする）
+const existing = db.prepare('SELECT COUNT(*) as c FROM users').get().c;
+if (existing > 0) {
+  console.log(`既にデータがあります（users: ${existing}）。シードをスキップしました。リセットしたい場合は npm run database:reset を実行してください。`);
+  db.close();
+  process.exit(0);
+}
 
 const insertUser = db.prepare(
   'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)'

@@ -12,6 +12,16 @@
 docker compose up --build
 ```
 
+サーバーだけが立ち上がります。**初回起動時は別ターミナルでデータベースの初期化が必要です**。
+
+```bash
+docker compose exec app npm run database:init    # テーブル作成（初回のみ）
+docker compose exec app npm run database:seed    # 初期データ投入（追記式・データがあればスキップ）
+docker compose exec app npm run database:reset   # 全消し → シード再投入
+```
+
+DB ファイルはホスト側 `./data` に保存されるので、`docker compose down` してもデータは消えません。
+
 ### ローカル Node.js の場合
 
 ```bash
@@ -49,4 +59,5 @@ npm run dev             # 開発サーバー起動（ファイル変更で自動
 |---|---|
 | `npm run dev` | 開発サーバーを起動（`node --watch` で自動再起動） |
 | `npm run database:init` | テーブルを作成 |
-| `npm run database:seed` | シードデータを投入（既存データは削除して再投入） |
+| `npm run database:seed` | シードデータを投入（追記式・既にデータがあればスキップ） |
+| `npm run database:reset` | 全データを削除してからシードを再投入 |
