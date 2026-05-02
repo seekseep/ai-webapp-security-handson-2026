@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
- * sections/<section>/<lecture>/{LECTURE,README,LEGAL}.md を
- * docs-site/src/content/docs/<section>/<lecture>/{index,readme,legal}.md に
- * フロントマターを差し込んで同期する。
+ * sections/<section>/<lecture>/{LECTURE,README}.md を
+ * docs-site/src/content/docs/<section>/<lecture>/{index,readme}.md に同期する。
+ * sections/LEGAL.md は docs-site/src/content/docs/legal.md に同期する（全章共通）。
+ * いずれもフロントマターを差し込む。
  *
  * - sections/ 側のマークダウンが単一情報源
  * - 出力先のレクチャーディレクトリは毎回作り直す
@@ -24,14 +25,14 @@ const SECTIONS = ['01-environment', '02-auth', '03-injection', '04-performance']
 
 // LECTURE.md → index.md (グループの代表)
 // README.md  → readme.md
-// LEGAL.md   → legal.md
 const KINDS = {
   'LECTURE.md': { kind: 'index',  slug: 'index.md',  pageOrder: 1, sidebarLabel: '解説' },
   'README.md':  { kind: 'readme', slug: 'readme.md', pageOrder: 5, sidebarLabel: '起動方法' },
-  'LEGAL.md':   { kind: 'legal',  slug: 'legal.md',  pageOrder: 9, sidebarLabel: '注意事項' },
 };
 
-const KIND_TO_SLUG = { index: '', readme: 'readme/', legal: 'legal/' };
+const KIND_TO_SLUG = { index: '', readme: 'readme/' };
+
+const LEGAL_SITE_URL = '/legal/';
 
 function extractTitle(content) {
   const match = content.match(/^#[ \t]+(.+?)\s*$/m);
@@ -99,31 +100,57 @@ function transformLinks(content, section, lecture, currentKind) {
     if (/^(https?:|mailto:|tel:|#)/i.test(target)) return match;
     if (target.startsWith('/')) return match;
 
-    const otherLecMd = target.match(/^(?:\.\.\/)+([\w-]+)\/([\w-]+)\/(LECTURE|README|LEGAL)\.md(#[^\s)]*)?$/i);
-    if (otherLecMd) {
-      const [, sec, lec, kindUpper, hash] = otherLecMd;
-      const kind = kindUpper.toUpperCase() === 'LECTURE' ? 'index' : kindUpper.toLowerCase();
-      const toUrl = siteUrlFor(sec, lec, kind);
-      return `${label}(${relativeUrl(fromUrl, toUrl, hash || '')}${titlePart})`;
-    }
+    const [pathPart, hashPart = ''] = target.split('#', 2);
+    const hash = hashPart ? `#${hashPart}` : '';
 
-    const sameLecMd = target.match(/^\.\/(LECTURE|README|LEGAL)\.md(#[^\s)]*)?$/i);
-    if (sameLecMd) {
-      const [, kindUpper, hash] = sameLecMd;
-      const kind = kindUpper.toUpperCase() === 'LECTURE' ? 'index' : kindUpper.toLowerCase();
-      const toUrl = siteUrlFor(section, lecture, kind);
-      return `${label}(${relativeUrl(fromUrl, toUrl, hash || '')}${titlePart})`;
-    }
+    if (target.startsWith('./') || target.startsWith('../')) {
+      const resolved = path.posix.normalize(path.posix.join(`sections/${section}/${lecture}`, pathPart));
 
-    if (target.startsWith('./')) {
-      const cleaned = target.replace(/^\.\//, '');
-      return `${label}(${REPO}/blob/main/sections/${section}/${lecture}/${cleaned}${titlePart})`;
-    }
+      if (resolved === 'sections/LEGAL.md') {
+        return `${label}(${relativeUrl(fromUrl, LEGAL_SITE_URL, hash)}${titlePart})`;
+      }
 
-    if (target.startsWith('../')) {
-      const resolved = path.posix.normalize(path.posix.join(`sections/${section}/${lecture}`, target));
+      const lectureMd = resolved.match(/^sections\/([\w-]+)\/([\w-]+)\/(LECTURE|README)\.md$/i);
+      if (lectureMd) {
+        const [, sec, lec, kindUpper] = lectureMd;
+        const kind = kindUpper.toUpperCase() === 'LECTURE' ? 'index' : kindUpper.toLowerCase();
+        const toUrl = siteUrlFor(sec, lec, kind);
+        return `${label}(${relativeUrl(fromUrl, toUrl, hash)}${titlePart})`;
+      }
+
       if (resolved.startsWith('sections/') && !resolved.includes('..')) {
-        return `${label}(${REPO}/blob/main/${resolved}${titlePart})`;
+        return `${label}(${REPO}/blob/main/${resolved}${hash}${titlePart})`;
+      }
+    }
+
+    return match;
+  });
+}
+
+function transformLinksTopLevel(content) {
+  return content.replace(/(\[[^\]]*\])\(([^)\s]+)(\s+"[^"]*")?\)/g, (match, label, rawTarget, title) => {
+    const target = rawTarget.trim();
+    const titlePart = title || '';
+
+    if (/^(https?:|mailto:|tel:|#)/i.test(target)) return match;
+    if (target.startsWith('/')) return match;
+
+    const [pathPart, hashPart = ''] = target.split('#', 2);
+    const hash = hashPart ? `#${hashPart}` : '';
+
+    if (target.startsWith('./') || target.startsWith('../')) {
+      const resolved = path.posix.normalize(path.posix.join('sections', pathPart));
+
+      const lectureMd = resolved.match(/^sections\/([\w-]+)\/([\w-]+)\/(LECTURE|README)\.md$/i);
+      if (lectureMd) {
+        const [, sec, lec, kindUpper] = lectureMd;
+        const kind = kindUpper.toUpperCase() === 'LECTURE' ? 'index' : kindUpper.toLowerCase();
+        const toUrl = siteUrlFor(sec, lec, kind);
+        return `${label}(${relativeUrl(LEGAL_SITE_URL, toUrl, hash)}${titlePart})`;
+      }
+
+      if (resolved.startsWith('sections/') && !resolved.includes('..')) {
+        return `${label}(${REPO}/blob/main/${resolved}${hash}${titlePart})`;
       }
     }
 
@@ -224,10 +251,44 @@ async function syncSection(section) {
   }
 }
 
+async function syncTopLevelLegal() {
+  const srcPath = path.join(SECTIONS_DIR, 'LEGAL.md');
+  let stats;
+  try {
+    stats = await stat(srcPath);
+  } catch (e) {
+    if (e.code === 'ENOENT') return;
+    throw e;
+  }
+  if (stats.size > MAX_FILE_BYTES) {
+    console.warn(`[sync-lectures] skipping oversize file: ${srcPath} (${stats.size} bytes)`);
+    return;
+  }
+
+  const raw = await readFile(srcPath, 'utf8');
+  const title = extractTitle(raw);
+  const description = extractDescription(raw);
+  const body = transformLinksTopLevel(stripLeadingH1(raw));
+  const editUrl = `${REPO}/edit/main/sections/LEGAL.md`;
+
+  const fm = buildFrontmatter({
+    title,
+    description,
+    sidebarOrder: 99,
+    sidebarLabel: '注意事項',
+    editUrl,
+  });
+
+  const outPath = path.join(DOCS_DIR, 'legal.md');
+  await writeFile(outPath, fm + body, 'utf8');
+  console.log(`[sync-lectures] sections/LEGAL.md -> ${path.relative(ROOT, outPath)}`);
+}
+
 async function main() {
   for (const section of SECTIONS) {
     await syncSection(section);
   }
+  await syncTopLevelLegal();
   console.log('[sync-lectures] done');
 }
 

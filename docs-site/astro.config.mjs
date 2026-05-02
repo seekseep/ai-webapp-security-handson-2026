@@ -25,6 +25,7 @@ export default defineConfig({
         { label: '02. 認証・認可', autogenerate: { directory: '02-auth' } },
         { label: '03. インジェクション', autogenerate: { directory: '03-injection' } },
         { label: '04. パフォーマンス', autogenerate: { directory: '04-performance' } },
+        { label: '注意事項', link: '/legal/' },
       ],
       editLink: {
         baseUrl: `${repoUrl}/edit/main/docs-site/`,
