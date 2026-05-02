@@ -1,5 +1,6 @@
 ---
 docs: true
+title: インジェクション
 sidebar:
   label: 概要
   order: 0

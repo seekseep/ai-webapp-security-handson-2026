@@ -21,7 +21,7 @@ sidebar:
 
 ### 環境構築
 
-- [環境構築](./01-environment/LECTURE.md)
+- [環境構築](./01-environment/01-environment/LECTURE.md)
 
 ### 認証・認可
 

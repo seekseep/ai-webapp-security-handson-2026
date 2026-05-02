@@ -1,5 +1,6 @@
 ---
 docs: true
+title: 認証・認可
 sidebar:
   label: 概要
   order: 0

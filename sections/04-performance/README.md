@@ -1,5 +1,6 @@
 ---
 docs: true
+title: パフォーマンス
 sidebar:
   label: 概要
   order: 0
