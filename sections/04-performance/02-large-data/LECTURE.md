@@ -81,18 +81,69 @@ const articles = db.prepare(`
 
 ### TODO 3: LIMIT/OFFSET でページネーション
 
-クエリ文字列から `limit` と `offset` を受け取り、SQL に `LIMIT ? OFFSET ?` を足してバインドします。`01-environment/01-environment/app/routes/articles.js` の `app.get('/')` ハンドラに同じ要件で書かれた実装があるので、書き方に詰まったらそちらを参照してください。
+[app/routes/articles.js](./app/routes/articles.js) の `app.get('/')` ハンドラを次のように書き換えます。
 
-要件は次のとおりです。
+```js
+app.get('/', (c) => {
+  const user = c.get('user');
 
-- クエリから `limit`（1〜100 の範囲、デフォルト 10）と `offset`（0 以上、デフォルト 0）を受け取る
-- 不正な値（数値でない・範囲外）はデフォルトに丸める
-- SQL に `LIMIT ? OFFSET ?` を足してバインドする
-- 総件数を `SELECT COUNT(*) FROM articles` で取り、ページネーション UI（前へ／次へなど）に使う
+  // クエリ文字列から limit / offset を取り、不正値はデフォルトに丸める
+  const limit = parseInt(c.req.query('limit') ?? '', 10);
+  const offset = parseInt(c.req.query('offset') ?? '', 10);
+
+  // 総件数（ページネーション UI に使う）
+  const total = db.prepare('SELECT COUNT(*) as count FROM articles').get().count;
+
+  // 1 ページ分だけ取る
+  const articles = db.prepare(`
+    SELECT articles.*, users.name as author_name
+    FROM articles
+    JOIN users ON articles.author_id = users.id
+    ORDER BY articles.created_at DESC
+    LIMIT ? OFFSET ?
+  `).all(limit, offset);
+
+  const hasPrev = offset > 0;
+  const hasNext = offset + limit < total;
+  const prevOffset = Math.max(0, offset - limit);
+  const nextOffset = offset + limit;
+
+  return c.html(layout('記事一覧', user, html`
+    <div class="page-header">
+      <h2>記事一覧</h2>
+      ${user ? html`<a href="/articles/new" class="btn">新しい記事を書く</a>` : ''}
+    </div>
+    ${articles.length === 0
+      ? html`<p>記事がまだありません。</p>`
+      : articles.map((a) => html`
+        <div class="article-card">
+          <h3><a href="/articles/${a.id}">${a.title}</a></h3>
+          <span class="meta">${a.author_name} / ${a.created_at}</span>
+        </div>
+      `)}
+    <nav class="pagination" aria-label="ページネーション">
+      ${hasPrev
+        ? html`<a href="/articles?limit=${limit}&offset=${prevOffset}" class="pagination-link">前へ</a>`
+        : html`<span class="pagination-link is-disabled">前へ</span>`}
+      ${hasNext
+        ? html`<a href="/articles?limit=${limit}&offset=${nextOffset}" class="pagination-link">次へ</a>`
+        : html`<span class="pagination-link is-disabled">次へ</span>`}
+    </nav>
+    <p class="pagination-summary">${total === 0 ? 0 : offset + 1}-${Math.min(offset + limit, total)} / ${total}</p>
+  `));
+});
+```
+
+押さえどころは次の2つです。
+
+- **入力の検証**：`limit` を 1〜100、`offset` を 0 以上に丸める。これを忘れると `?limit=999999` のような攻撃的リクエストで結局重いクエリが走り、対策の意味がなくなる
+- **SQL の `LIMIT ? OFFSET ?`**：これを足すだけで DB 側が必要分しか返さない。他はすべて UI のための計算
+
+ページ番号付きのフルセット UI（前後10ページぶんの番号リンク）は [01-environment/01-environment/app/routes/articles.js](../../01-environment/01-environment/app/routes/articles.js) に実装があるので、そちらを参考に拡張できます。
 
 修正後、`/articles` の初回ロードが **瞬時** に返るはずです。Network タブで Size と Time が桁違いに減ることを確認してください。
 
-> **注意**：OFFSET ベースは深いページで `OFFSET 4990` のようになると、DB が前 4990 行を読み飛ばすので意外と遅くなります。後述の「OFFSET ページネーションの罠」を参照。
+> **注意**：OFFSET ベースは深いページで `OFFSET 49990` のようになると、DB が前 49990 行を読み飛ばすので意外と遅くなります。後述の「OFFSET ページネーションの罠」を参照。
 
 ---
 
