@@ -19,37 +19,27 @@ sidebar:
 
 ## 一覧
 
-### 01-environment — 環境構築
+### 環境構築
 
-| レクチャー | テーマ |
-|---|---|
-| [01-environment](./01-environment/01-environment/) | 環境構築・全体像の把握 |
+- [環境構築](./01-environment/LECTURE.md)
 
-### 02-auth — 認証・認可
+### 認証・認可
 
-| レクチャー | テーマ |
-|---|---|
-| [01-no-authentication](./02-auth/01-no-authentication/) | 認証なし |
-| [02-weak-authentication](./02-auth/02-weak-authentication/) | 不十分な認証 |
-| [03-broken-authorization](./02-auth/03-broken-authorization/) | 不十分な認可 |
+- [認証なし](./02-auth/01-no-authentication/LECTURE.md)
+- [不十分な認証](./02-auth/02-weak-authentication/LECTURE.md)
+- [不十分な認可](./02-auth/03-broken-authorization/LECTURE.md)
 
-### 03-injection — インジェクション
+### インジェクション
 
-| レクチャー | テーマ |
-|---|---|
-| [01-sqli](./03-injection/01-sqli/) | SQL インジェクション |
-| [02-xss](./03-injection/02-xss/) | XSS（Stored XSS） |
-| [03-command-injection](./03-injection/03-command-injection/) | コマンドインジェクション |
+- [SQL インジェクション](./03-injection/01-sqli/LECTURE.md)
+- [XSS（Stored XSS）](./03-injection/02-xss/LECTURE.md)
+- [コマンドインジェクション](./03-injection/03-command-injection/LECTURE.md)
 
-### 04-performance — パフォーマンス
+### パフォーマンス
 
-| レクチャー | テーマ |
-|---|---|
-| [01-n-plus-one](./04-performance/01-n-plus-one/) | N+1 問題 |
-| [02-large-data](./04-performance/02-large-data/) | 大量データ |
-| [03-cache](./04-performance/03-cache/) | キャッシュ |
-
-各レクチャーの作成状況は [TODO.md](../TODO.md) で管理しています。
+- [N+1 問題](./04-performance/01-n-plus-one/LECTURE.md)
+- [大量データ](./04-performance/02-large-data/LECTURE.md)
+- [キャッシュ](./04-performance/03-cache/LECTURE.md)
 
 ## 技術スタック
 
