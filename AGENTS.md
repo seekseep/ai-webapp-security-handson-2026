@@ -134,10 +134,12 @@ app/
 **Docker の場合：**
 
 ```bash
-docker compose up --build
+docker compose watch
 ```
 
-サーバーだけが起動する（init / seed は **自動実行されない**）。**初回起動時** または DB を作り直したいときは、別ターミナルで以下を実行する。
+`docker compose watch` でビルド・起動・ファイル監視まで一気にやる（init / seed は **自動実行されない**）。`app/`・`scripts/` の変更は自動同期＋コンテナ再起動、`package.json`・`Dockerfile` の変更は自動再ビルド。Mac の Docker Desktop ではホストの fs イベントがコンテナの inotify に伝わらないため、bind mount + `node --watch` だけでは再起動が走らない。Compose Watch でこれを回避している。
+
+**初回起動時** または DB を作り直したいときは、別ターミナルで以下を実行する。
 
 ```bash
 docker compose exec app npm run database:init   # テーブル作成（初回のみ）
@@ -172,11 +174,22 @@ services:
     environment:
       - DB_PATH=/workspace/data/database.sqlite
     volumes:
-      - ./app:/workspace/app
-      - ./scripts:/workspace/scripts
       - ./data:/workspace/data
-      - /workspace/node_modules
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./app
+          target: /workspace/app
+        - action: sync+restart
+          path: ./scripts
+          target: /workspace/scripts
+        - action: rebuild
+          path: ./package.json
+        - action: rebuild
+          path: ./Dockerfile
 ```
+
+`./data` だけは bind mount で永続化する（DB のため）。`app/`・`scripts/` は Compose Watch の `sync+restart` でホスト→コンテナへ同期し、コンテナ再起動で新しいコードを読み込ませる。`package.json` / `Dockerfile` は `rebuild` でイメージごと作り直す。
 
 ### Dockerfile の共通パターン
 
@@ -188,8 +201,10 @@ COPY package*.json ./
 RUN npm install
 COPY app ./app
 COPY scripts ./scripts
-CMD ["node", "--watch", "app/server.js"]
+CMD ["node", "app/server.js"]
 ```
+
+CMD で `--watch` は使わない。再起動は Compose Watch の `sync+restart` が外側から行うため、二重 watch にしない。
 
 `init` と `seed` は CMD に含めない。**コンテナ起動時にデータを毎回ゼロから作り直さない** ため。学習者が `docker compose exec app npm run database:init / :seed / :reset` を能動的に叩く運用にする。
 

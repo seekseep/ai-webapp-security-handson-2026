@@ -14,7 +14,7 @@
 | データベース | SQLite + [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) | ORM を使わず生 SQL を書く |
 | Markdown | [marked](https://marked.js.org/) | 記事本文の HTML 変換 |
 | スタイル | プレーン CSS | フロントエンド JS は使わない |
-| 開発支援 | `node --watch` | ファイル変更時の自動再起動 |
+| 開発支援 | Docker Compose Watch | ファイル変更時の自動同期・再起動 |
 | コンテナ | Docker / Docker Compose | 起動環境の統一 |
 
 ### 設計方針
@@ -29,10 +29,10 @@
 ### Docker の場合
 
 ```bash
-docker compose up --build
+docker compose watch
 ```
 
-サーバーだけが立ち上がります。**初回起動時は別ターミナルでデータベースの初期化が必要です**。
+サーバーが起動し、`app/`・`scripts/` の変更を検知して自動でコンテナを再起動します。**初回起動時は別ターミナルでデータベースの初期化が必要です**。
 
 ```bash
 docker compose exec app npm run database:init    # テーブル作成（初回のみ）

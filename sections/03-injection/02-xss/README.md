@@ -9,10 +9,10 @@
 ### Docker の場合
 
 ```bash
-docker compose up --build
+docker compose watch
 ```
 
-サーバーだけが立ち上がります。**初回起動時は別ターミナルでデータベースの初期化が必要です**。
+サーバーが起動し、`app/`・`scripts/` の変更を検知して自動でコンテナを再起動します。**初回起動時は別ターミナルでデータベースの初期化が必要です**。
 
 ```bash
 docker compose exec app npm run database:init    # テーブル作成（初回のみ）

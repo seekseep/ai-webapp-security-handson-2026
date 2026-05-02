@@ -7,7 +7,16 @@ services:
     environment:
       - DB_PATH=/workspace/data/database.sqlite
     volumes:
-      - ./app:/workspace/app
-      - ./scripts:/workspace/scripts
       - ./data:/workspace/data
-      - /workspace/node_modules
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./app
+          target: /workspace/app
+        - action: sync+restart
+          path: ./scripts
+          target: /workspace/scripts
+        - action: rebuild
+          path: ./package.json
+        - action: rebuild
+          path: ./Dockerfile

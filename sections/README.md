@@ -183,16 +183,18 @@ volta install node@20
 #### アプリケーションの起動
 
 ```bash
-docker compose up --build
+docker compose watch
 ```
 
-サーバーだけが立ち上がります。初回はこのあとデータベースのセットアップが必要です。
+`docker compose watch` はビルド・起動・ファイル監視を 1 コマンドでこなします。`app/`・`scripts/` を編集すると自動でコンテナを再起動し、`package.json`・`Dockerfile` を変更したときは自動で再ビルドします。初回はこのあとデータベースのセットアップが必要です。
+
+> Mac の Docker Desktop ではホストの fs イベントがコンテナの inotify に伝わらず、bind mount + `node --watch` だけでは再起動が走らないことがあります。Compose Watch はホスト側で変更を検知してコンテナへ同期＋再起動するので、この問題を避けられます。
 
 止めるときは `Ctrl+C`、コンテナごと削除したいときは `docker compose down` を使います。DB ファイルはホスト側 `./data` 配下に保存されるので、`docker compose down` してもデータは消えません。
 
 #### データベースのセットアップ
 
-`docker compose up` を動かしたまま、**別のターミナル**を開いて以下を実行します。
+`docker compose watch` を動かしたまま、**別のターミナル**を開いて以下を実行します。
 
 ```bash
 docker compose exec app npm run database:init    # テーブル作成（初回のみ）
@@ -250,7 +252,7 @@ npm run database:seed
 # Docker の場合
 docker compose down
 rm -f data/database.sqlite data/database.sqlite-shm data/database.sqlite-wal
-docker compose up --build
+docker compose watch
 docker compose exec app npm run database:init
 docker compose exec app npm run database:seed
 ```

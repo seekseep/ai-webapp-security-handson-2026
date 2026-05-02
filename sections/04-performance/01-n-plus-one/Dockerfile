@@ -5,4 +5,4 @@ COPY package*.json ./
 RUN npm install
 COPY app ./app
 COPY scripts ./scripts
-CMD ["node", "--watch", "app/server.js"]
+CMD ["node", "app/server.js"]

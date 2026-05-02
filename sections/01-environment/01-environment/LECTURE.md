@@ -33,7 +33,7 @@ npm run dev             # 開発サーバー起動（ファイル変更で自動
 
 ブラウザで http://localhost:3000 にアクセスして、記事一覧が表示されれば成功です。
 
-Docker を使う場合は `docker compose up --build` 一発で `init → seed → server` の順に実行されます。
+Docker を使う場合は `docker compose watch` でサーバーが起動します。`init` と `seed` は別ターミナルで `docker compose exec app npm run database:init / :seed` を順に叩いてください（詳細は [README.md](./README.md) の「起動方法」を参照）。
 
 ### TODO 2: 全機能を一通り操作してみる
 
