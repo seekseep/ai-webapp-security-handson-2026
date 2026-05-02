@@ -215,7 +215,54 @@ insertComment.run('参考になりました！', 1, 2);
 insertComment.run('わかりやすい記事ですね。', 1, 3);
 insertComment.run('もっと詳しく知りたいです。', 2, 1);
 
+// ダッシュボードの集計を実際に重くするため、コメントを 100 万件投入する。
+// transaction で囲まないと数十分かかる。
+const TOTAL_COMMENTS = 1_000_000;
+const ARTICLE_COUNT = 200;
+const USER_COUNT = 30;
+const commentBodies = [
+  'なるほど、勉強になりました。',
+  'この観点は見落としていました。',
+  '実際に試してみます！',
+  '同じ問題で悩んでいたので助かります。',
+  '具体例があってわかりやすいです。',
+  'もう少し詳しく知りたいです。',
+  '関連記事も読んでみます。',
+  '自分の現場でも同じ状況です。',
+  'ブックマークしました。',
+  '続編が楽しみです。',
+];
+
+// 人気度の偏りを id 順とは無関係にするためにランクを並び替える。
+// Math.pow(r, 2) でランク 0（最人気）に寄せ、シャッフルした配列で実 id にマップする。
+function shuffled(n) {
+  const arr = Array.from({ length: n }, (_, i) => i + 1);
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+const articleByRank = shuffled(ARTICLE_COUNT);
+const userByRank = shuffled(USER_COUNT);
+
+console.log(`コメントを ${TOTAL_COMMENTS.toLocaleString()} 件投入中...`);
+const t0 = Date.now();
+db.transaction(() => {
+  for (let i = 0; i < TOTAL_COMMENTS; i++) {
+    const articleRank = Math.floor(Math.pow(Math.random(), 2) * ARTICLE_COUNT);
+    const userRank = Math.floor(Math.pow(Math.random(), 2) * USER_COUNT);
+    insertComment.run(
+      commentBodies[i % commentBodies.length],
+      articleByRank[articleRank],
+      userByRank[userRank],
+    );
+  }
+})();
+console.log(`コメント投入完了（${((Date.now() - t0) / 1000).toFixed(1)}s）`);
+
 const userCount = db.prepare('SELECT COUNT(*) as c FROM users').get().c;
 const articleCount = db.prepare('SELECT COUNT(*) as c FROM articles').get().c;
-console.log(`シードデータを投入しました（users: ${userCount}, articles: ${articleCount}）`);
+const commentCount = db.prepare('SELECT COUNT(*) as c FROM comments').get().c;
+console.log(`シードデータを投入しました（users: ${userCount}, articles: ${articleCount}, comments: ${commentCount.toLocaleString()}）`);
 db.close();

@@ -2,8 +2,8 @@
 
 ## TODO
 
-1. アプリを起動して `/dashboard` を **5 回連続で開き**、サーバーターミナルに毎回 `[dashboard] 800〜1000ms` のような行が出ることを確認する
-2. `app/routes/dashboard.js` を読み、**毎回その時間がかかる理由** を説明できるようにする
+1. アプリを起動して `/dashboard` を **5 回連続で開き**、サーバーターミナルに毎回 `[dashboard] 900ms` 前後の行が出ることを確認する
+2. `app/routes/dashboard.js` と `comments` テーブルの状態を見て、**毎回その時間がかかる理由** を説明できるようにする
 3. `app/lib/cache.js` を **新規作成** して TTL 30 秒の簡易キャッシュを導入し、2 回目以降のリクエストが `<10ms` で返ることを確認する
 
 ## 学ぶこと
@@ -23,22 +23,29 @@
 管理者（`admin@example.com` / `admin123`）でログインし、`/dashboard` を開いてください。サーバーを起動しているターミナルに次のような行が出ます。
 
 ```
-[dashboard] 812ms
+[dashboard] 912ms
 ```
 
-ブラウザを 5 回リロードしても、毎回 800ms 前後の数字が出続けます。ブラウザキャッシュも効いていません（HTML を返しているだけで `Cache-Control` を付けていないため）。
+ブラウザを 5 回リロードしても、毎回 900ms 前後の数字が出続けます。ブラウザキャッシュも効いていません（HTML を返しているだけで `Cache-Control` を付けていないため）。
 
 ### TODO 2: 何にかかっているのかを説明する
 
-該当箇所は [app/routes/dashboard.js](./app/routes/dashboard.js) のハンドラです。中身を見ると、リクエストごとに次のような処理が走っています。
+該当箇所は [app/routes/dashboard.js](./app/routes/dashboard.js) のハンドラです。リクエストごとに次のクエリが走っています。
 
 - `COUNT(*)` クエリ × 3（`users` / `articles` / `comments`）
 - JOIN・GROUP BY 集計クエリ × 4（`recentArticles` / `topAuthors` / `topCommentedArticles` / `topCommenters`）
-- `await new Promise(r => setTimeout(r, 800))` の擬似遅延
 
-擬似遅延は、現実の「重い外部 API 呼び出し」「CPU バウンドな集計処理」「巨大テーブルへのフルスキャン」などを置き換えたものだと思ってください。
+このうち重いのは **`comments` を JOIN して GROUP BY する 2 つ**（`topCommentedArticles` / `topCommenters`）です。`comments` テーブルには **100 万行** が入っていて、`comments.article_id` と `comments.user_id` には **インデックスがありません**。そのため記事ごと・ユーザーごとの集計を取るために 100 万行を毎回フルスキャンする必要があり、これだけで 800ms 以上かかります。
+
+```sh
+sqlite3 data/database.sqlite 'SELECT COUNT(*) FROM comments;'
+# => 1000003
+```
 
 ポイントは、**これらの結果は秒単位ではほとんど変わらない** ということです。ユーザー数や記事数の集計が 1 秒ごとに別の値を返す必要はありません。にもかかわらず、毎リクエスト計算し直しているのが今の状態です。
+
+> **インデックスを貼れば速くなるのでは？**
+> その通りで、`comments(article_id)` / `comments(user_id)` にインデックスを貼れば数十 ms まで縮みます（前章 [02-large-data](../02-large-data/) で扱った話）。ただしインデックスを貼っても **GROUP BY の集計コスト自体はゼロにはなりません**。ユーザー数・記事数の集計のように「秒単位では値が変わらない」結果は、**そもそも毎回計算しないのが一番速い** — それがキャッシュの発想です。実運用ではインデックスとキャッシュの両方を使います。
 
 ### TODO 3: TTL キャッシュを導入する
 
@@ -85,12 +92,11 @@ app.get('/', async (c) => {
   const user = c.get('user');
 
   const stats = await getOrLoad('dashboard:stats', 30_000, async () => {
-    // 元の集計クエリと擬似遅延をここに移す
+    // 元の集計クエリをここに移す
     const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
     const articleCount = db.prepare('SELECT COUNT(*) as count FROM articles').get();
     const commentCount = db.prepare('SELECT COUNT(*) as count FROM comments').get();
     // ... recentArticles / topAuthors / topCommentedArticles / topCommenters も同様
-    await new Promise((r) => setTimeout(r, 800));
     return {
       userCount, articleCount, commentCount,
       recentArticles, topAuthors, topCommentedArticles, topCommenters,
@@ -104,11 +110,11 @@ app.get('/', async (c) => {
 
 動作確認は次の通りです。
 
-1. 1 回目の `/dashboard` → ターミナルに `[dashboard] 812ms` のような行（キャッシュミスで再計算）
+1. 1 回目の `/dashboard` → ターミナルに `[dashboard] 912ms` のような行（キャッシュミスで再計算）
 2. 30 秒以内にリロード → `[dashboard] 2ms` のような行（キャッシュヒット）
-3. 30 秒経過後にリロード → また 800ms 台（TTL 切れで再計算）
+3. 30 秒経過後にリロード → また 900ms 台（TTL 切れで再計算）
 
-「同じ入力に対しては同じ出力を返す」を **覚えておくだけ** で 800ms が 2ms になります。これがアプリ層キャッシュの基本です。
+「同じ入力に対しては同じ出力を返す」を **覚えておくだけ** で 900ms が 2ms になります。これがアプリ層キャッシュの基本です。
 
 ---
 

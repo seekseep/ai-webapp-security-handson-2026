@@ -51,10 +51,6 @@ app.get('/', async (c) => {
     LIMIT 5
   `).all();
 
-  // 重い外部 API 呼び出しや CPU バウンドな集計処理を模した待ち。
-  // 教材として「毎回800ms以上かかる」を再現可能にするため。
-  await new Promise((r) => setTimeout(r, 800));
-
   console.log(`[dashboard] ${Date.now() - t0}ms`);
 
   return c.html(layout('ダッシュボード', user, html`
