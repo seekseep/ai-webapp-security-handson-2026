@@ -88,8 +88,8 @@ app.get('/', (c) => {
   const user = c.get('user');
 
   // クエリ文字列から limit / offset を取り、不正値はデフォルトに丸める
-  const limit = parseInt(c.req.query('limit') ?? '', 10);
-  const offset = parseInt(c.req.query('offset') ?? '', 10);
+  const limit = parseInt(c.req.query('limit') ?? '10', 10);
+  const offset = parseInt(c.req.query('offset') ?? '0', 10);
 
   // 総件数（ページネーション UI に使う）
   const total = db.prepare('SELECT COUNT(*) as count FROM articles').get().count;
