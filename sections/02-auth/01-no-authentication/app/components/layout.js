@@ -8,6 +8,7 @@ export function layout(title, user, content) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${title} - ナレッジ共有</title>
   <link rel="stylesheet" href="/assets/style.css" />
+  <script src="/assets/confirm.js" defer></script>
 </head>
 <body>
   <header>

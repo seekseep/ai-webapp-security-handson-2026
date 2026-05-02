@@ -30,7 +30,7 @@ app.get('/', (c) => {
               ${user && u.id !== user.id
                 ? html`
                   <form method="POST" action="/admin/users/${u.id}/delete" style="display:inline">
-                    <button type="submit" class="btn btn-danger btn-sm">削除</button>
+                    <button type="submit" class="btn btn-danger btn-sm confirm-button" data-confirm-message="本当に削除しますか？">削除</button>
                   </form>
                 ` : ''}
             </td>
