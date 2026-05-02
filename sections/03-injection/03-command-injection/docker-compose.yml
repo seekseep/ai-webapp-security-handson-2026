@@ -1,5 +1,6 @@
 services:
   app:
+    container_name: handson-202605-03-injection-03-command-injection
     build: .
     ports:
       - "3000:3000"
@@ -8,8 +9,5 @@ services:
     volumes:
       - ./app:/workspace/app
       - ./scripts:/workspace/scripts
-      - app-data:/workspace/data
+      - ./data:/workspace/data
       - /workspace/node_modules
-
-volumes:
-  app-data:

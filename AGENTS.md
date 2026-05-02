@@ -160,9 +160,12 @@ npm run dev
 
 ### docker-compose.yml の共通パターン
 
+`container_name` は `handson-202605-<section>-<lecture>` の規則で各レクチャーごとに付ける（`docker ps` でどのレクチャーのコンテナか一目でわかるようにするため）。
+
 ```yaml
 services:
   app:
+    container_name: handson-202605-<section>-<lecture>  # 例: handson-202605-03-injection-01-sqli
     build: .
     ports:
       - "3000:3000"
@@ -171,11 +174,8 @@ services:
     volumes:
       - ./app:/workspace/app
       - ./scripts:/workspace/scripts
-      - app-data:/workspace/data
+      - ./data:/workspace/data
       - /workspace/node_modules
-
-volumes:
-  app-data:
 ```
 
 ### Dockerfile の共通パターン

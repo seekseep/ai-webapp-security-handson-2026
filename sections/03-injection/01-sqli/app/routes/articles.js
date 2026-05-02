@@ -162,7 +162,7 @@ app.get('/:id', (c) => {
       <div class="article-actions">
         <a href="/articles/${article.id}/edit" class="btn">編集</a>
         <form method="POST" action="/articles/${article.id}/delete">
-          <button type="submit" class="btn btn-danger">削除</button>
+          <button type="submit" class="btn btn-danger confirm-button" data-confirm-message="本当に削除しますか？">削除</button>
         </form>
       </div>
     ` : ''}
