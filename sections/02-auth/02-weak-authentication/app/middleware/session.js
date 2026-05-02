@@ -1,22 +1,22 @@
 import { setCookie, deleteCookie, getCookie } from 'hono/cookie';
 
-// 「セッション」と称しているが、実体は client が書き換え可能な Cookie ひとつだけ。
-// サーバーサイドストアは持たない。これがレクチャーの問題点。
 export function sessionMiddleware() {
   return async (c, next) => {
     const session = {
       get userId() {
         const v = getCookie(c, 'user_id');
-        const n = Number(v);
-        return Number.isInteger(n) && n > 0 ? n : null;
+        return v ?? null;
       },
       set userId(value) {
         if (value == null) {
           deleteCookie(c, 'user_id', { path: '/' });
-        } else {
-          setCookie(c, 'user_id', String(value), { path: '/' });
-          // httpOnly をわざと付けない／署名もしない
+          return;
         }
+
+        setCookie(c, 'user_id', String(value), {
+          path: '/',
+          httpOnly: true
+        });
       },
     };
     c.set('session', session);

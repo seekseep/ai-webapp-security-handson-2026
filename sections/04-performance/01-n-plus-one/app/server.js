@@ -13,7 +13,7 @@ import dashboard from './routes/dashboard.js';
 const app = new Hono();
 
 // 静的ファイル配信
-app.use('/public/*', serveStatic({ root: './app' }));
+app.use('/assets/*', serveStatic({ root: './app' }));
 
 // クエリ本数を計測してログ出力
 app.use('*', queryLogger());

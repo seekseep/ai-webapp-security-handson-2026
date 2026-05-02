@@ -12,7 +12,7 @@ import dashboard from './routes/dashboard.js';
 const app = new Hono();
 
 // 静的ファイル配信
-app.use('/public/*', serveStatic({ root: './app' }));
+app.use('/assets/*', serveStatic({ root: './app' }));
 
 // セッション管理
 app.use('*', sessionMiddleware());

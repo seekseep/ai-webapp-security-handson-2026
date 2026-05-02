@@ -24,7 +24,7 @@
 2. DevTools を開く（Chrome なら **Application** タブ／Firefox なら **Storage** タブ）→ Cookies → `http://localhost:3000`
 3. `user_id` Cookie の値を `1` に書き換えてリロードする
 4. ヘッダーに表示される名前が「管理者」に変わり、`/admin` が開けてしまう
-5. このとき `httpOnly` 列にチェックが付いていない（DevTools にチェック欄がある）ことも確認してください。`httpOnly` が付いていないと、JS からも `document.cookie` で読み書きできてしまいます
+5. このとき `httpOnly` 列にチェックが付いていることを確認してください。`httpOnly` は JS (`document.cookie`) からの読み書きを禁止するフラグですが、DevTools の Cookie エディタからの編集には効きません。**フラグを付けても「Cookie の中身が答えそのもの」である限り改ざんは防げない** のが本章の核心です
 
 ### TODO 2: なぜ通ってしまうのか
 
@@ -33,8 +33,7 @@
 ```js
 get userId() {
   const v = getCookie(c, 'user_id');
-  const n = Number(v);
-  return Number.isInteger(n) && n > 0 ? n : null;
+  return v ?? null;
 }
 ```
 

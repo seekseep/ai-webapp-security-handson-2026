@@ -5,7 +5,9 @@ export function currentUser() {
   return async (c, next) => {
     const session = c.get('session');
     if (session?.userId) {
-      const user = db.prepare('SELECT id, name, email, role FROM users WHERE id = ?').get(session.userId);
+      const user = db.prepare(
+        'SELECT id, name, email, role FROM users WHERE id = ?'
+      ).get(session.userId);
       c.set('user', user || null);
     } else {
       c.set('user', null);
