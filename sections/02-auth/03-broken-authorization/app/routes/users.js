@@ -14,7 +14,7 @@ app.get('/:id', (c) => {
   const id = c.req.param('id');
 
   const profile = db.prepare(
-    'SELECT id, name, email, role, password, created_at FROM users WHERE id = ?'
+    'SELECT id, name, email, role, created_at FROM users WHERE id = ?'
   ).get(id);
   if (!profile) {
     return c.html(layout('見つかりません', currentUser, html`<p>ユーザーが見つかりませんでした。</p>`), 404);
@@ -26,17 +26,14 @@ app.get('/:id', (c) => {
 
   const commentCount = db.prepare('SELECT COUNT(*) as count FROM comments WHERE user_id = ?').get(id);
 
-  const passwordPreview = profile.password ? profile.password.slice(0, 16) + '...' : '(未設定)';
-
   return c.html(layout(profile.name, currentUser, html`
     <h2>${profile.name}</h2>
     <div class="profile-info">
       <p>内部 ID: ${profile.id}</p>
       <p>メール: ${profile.email}</p>
-      <p>ロール: ${profile.role}</p>
+      <p>権限: ${profile.role}</p>
       <p>登録日: ${profile.created_at}</p>
       <p>コメント数: ${commentCount.count}</p>
-      <p>パスワードハッシュ（先頭16文字）: <code>${passwordPreview}</code></p>
     </div>
 
     <h3>投稿した記事 (${articles.length})</h3>

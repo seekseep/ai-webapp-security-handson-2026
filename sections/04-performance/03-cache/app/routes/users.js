@@ -25,7 +25,7 @@ app.get('/:id', (c) => {
     <h2>${profile.name}</h2>
     <div class="profile-info">
       <p>メール: ${profile.email}</p>
-      <p>ロール: ${profile.role}</p>
+      <p>権限: ${profile.role}</p>
       <p>登録日: ${profile.created_at}</p>
       <p>コメント数: ${commentCount.count}</p>
     </div>
