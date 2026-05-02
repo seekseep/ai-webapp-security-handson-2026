@@ -1,5 +1,6 @@
 ---
 docs: true
+title: AI Webapp Security ハンズオン 2026
 ---
 
 # AI Webapp Security ハンズオン 2026

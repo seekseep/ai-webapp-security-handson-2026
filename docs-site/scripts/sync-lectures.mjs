@@ -125,10 +125,13 @@ function relativeUrl(fromUrl, toUrl, hash = '') {
  */
 function resolveSiteUrl(resolved, isDirLink) {
   // ファイル形式の単一情報源
-  if (resolved === 'sections/LEGAL.md') return '/legal/';
   if (resolved === 'sections/README.md') return '/getting-started/';
 
-  let m = resolved.match(/^sections\/([\w-]+)\/README\.md$/);
+  // sections 直下の単発ページ (LEGAL.md, DOCKER.md, HOST.md, TOOLS.md など)
+  let m = resolved.match(/^sections\/([\w-]+)\.md$/);
+  if (m && m[1] !== 'README') return `/${m[1].toLowerCase()}/`;
+
+  m = resolved.match(/^sections\/([\w-]+)\/README\.md$/);
   if (m) return `/${m[1]}/`;
 
   m = resolved.match(/^sections\/([\w-]+)\/([\w-]+)\/LECTURE\.md$/i);
