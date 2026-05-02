@@ -1,5 +1,6 @@
 ---
 docs: true
+title: 違法性について（日本法）
 sidebar:
   label: 注意事項
   order: 99
