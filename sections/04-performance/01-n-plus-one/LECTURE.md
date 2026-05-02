@@ -72,8 +72,13 @@ for (const u of users) {
 
 ```js
 const users = db.prepare(`
-  SELECT users.id, users.name, users.email, users.role, users.created_at,
-         COUNT(articles.id) as article_count
+  SELECT
+    users.id,
+    users.name,
+    users.email,
+    users.role,
+    users.created_at,
+    COUNT(articles.id) as article_count
   FROM users
   LEFT JOIN articles ON articles.author_id = users.id
   GROUP BY users.id
