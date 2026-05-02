@@ -34,5 +34,13 @@ db.exec(`
   )
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS sessions (
+    id TEXT PRIMARY KEY,
+    data TEXT NOT NULL DEFAULT '{}',
+    expires_at INTEGER NOT NULL
+  )
+`);
+
 console.log('テーブルを作成しました');
 db.close();

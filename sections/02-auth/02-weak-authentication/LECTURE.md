@@ -24,7 +24,6 @@
 2. DevTools を開く（Chrome なら **Application** タブ／Firefox なら **Storage** タブ）→ Cookies → `http://localhost:3000`
 3. `user_id` Cookie の値を `1` に書き換えてリロードする
 4. ヘッダーに表示される名前が「管理者」に変わり、`/admin` が開けてしまう
-5. このとき `httpOnly` 列にチェックが付いていることを確認してください。`httpOnly` は JS (`document.cookie`) からの読み書きを禁止するフラグですが、DevTools の Cookie エディタからの編集には効きません。**フラグを付けても「Cookie の中身が答えそのもの」である限り改ざんは防げない** のが本章の核心です
 
 ### TODO 2: なぜ通ってしまうのか
 
@@ -53,81 +52,146 @@ DB を引いてはいますが、**引くキー自体がクライアントから
 
 ### TODO 3: サーバーサイドセッションに直す
 
-修正の方向は **「Cookie にはランダムな ID だけを置き、ユーザーの実態はサーバー側 Map に持つ」** です。Cookie が書き換えられても、サーバー側 Map に存在しない ID なら未ログイン扱いになります。
+修正の方向は **「Cookie にはランダムな ID だけを置き、ユーザーの実態はサーバー側ストアに持つ」** です。Cookie が書き換えられても、サーバー側ストアに存在しない ID なら未ログイン扱いになります。
 
-`app/middleware/session.js` を以下に置き換えます（01-environment の実装と同じものです）。
+`app/middleware/session.js` を以下に置き換えます（01-environment の実装と同じものです）。本教材では **学習環境を簡素化するため SQLite の `sessions` テーブル** をストアとして使います。本番環境では Redis のようなインメモリ KVS を使うのが定石です（後述）。
 
 ```js
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
 import crypto from 'crypto';
+import db from '../db.js';
 
-// インメモリのセッションストア
-const sessions = new Map();
+const ONE_DAY_SEC = 60 * 60 * 24;
+const nowSec = () => Math.floor(Date.now() / 1000);
 
 export function sessionMiddleware() {
   return async (c, next) => {
-    let sessionId = getCookie(c, 'session_id');
+    const sessionId = getCookie(c, 'session_id');
     let session;
 
-    if (sessionId && sessions.has(sessionId)) {
-      session = sessions.get(sessionId);
-    } else {
-      sessionId = crypto.randomUUID();
-      session = {};
-      sessions.set(sessionId, session);
-      setCookie(c, 'session_id', sessionId, {
+    if (sessionId) {
+      const row = db
+        .prepare('SELECT data FROM sessions WHERE id = ? AND expires_at > ?')
+        .get(sessionId, nowSec());
+      if (row) session = { id: sessionId, ...JSON.parse(row.data) };
+    }
+
+    if (!session) {
+      session = { id: crypto.randomUUID() };
+      db
+        .prepare('INSERT INTO sessions (id, data, expires_at) VALUES (?, ?, ?)')
+        .run(session.id, '{}', nowSec() + ONE_DAY_SEC);
+      setCookie(c, 'session_id', session.id, {
         httpOnly: true,
         path: '/',
-        maxAge: 60 * 60 * 24, // 1日
+        maxAge: ONE_DAY_SEC,
       });
     }
 
     c.set('session', session);
-    c.set('sessionId', sessionId);
     await next();
+
+    // ルート内で変更された session を DB に書き戻す
+    const { id, ...data } = c.get('session');
+    db
+      .prepare('UPDATE sessions SET data = ? WHERE id = ?')
+      .run(JSON.stringify(data), id);
   };
 }
 
 export function destroySession(c) {
-  const sessionId = c.get('sessionId');
-  if (sessionId) {
-    sessions.delete(sessionId);
+  const session = c.get('session');
+  if (session) {
+    db
+      .prepare('DELETE FROM sessions WHERE id = ?')
+      .run(session.id);
     deleteCookie(c, 'session_id', { path: '/' });
   }
 }
 ```
 
+`scripts/init.js` には次の `sessions` テーブルが追加してあります（再 init 不要なら既存 DB のまま使えます）。
+
+```sql
+CREATE TABLE IF NOT EXISTS sessions (
+  id TEXT PRIMARY KEY,
+  data TEXT NOT NULL DEFAULT '{}',  -- JSON: { userId, ... }
+  expires_at INTEGER NOT NULL        -- UNIX秒
+)
+```
+
 ポイントは次の3つです。
 
 - Cookie に入れるのは `session_id` という **ランダム UUID** だけ。ユーザー ID は乗せない
-- サーバー側 `Map` で `sessionId → { userId }` を保持し、`session.userId` への代入は Map への書き込み、参照は Map からの読み出しになる
+- サーバー側 `sessions` テーブルで `sessionId → { userId }` を保持し、`session.userId` への代入はミドルウェア末尾の `UPDATE` で DB に書き戻される
 - Cookie には `httpOnly: true` を付け、JS からのアクセスを塞ぐ
 
 修正後、もう一度動作確認してください。
 
 1. ログインすると Cookie が `session_id` という UUID 1個だけになっていること
-2. その値を `1` に書き換えてリロードしても、サーバーの Map にそんな ID は無いので未ログイン扱いになること
-3. ログアウトすると `session_id` Cookie が消え、サーバー側 Map のエントリも削除されること
+2. その値を `1` に書き換えてリロードしても、サーバーの `sessions` テーブルにそんな ID は無いので未ログイン扱いになること
+3. ログアウトすると `session_id` Cookie が消え、サーバー側 `sessions` テーブルのレコードも削除されること
+
+> **本番ではどうする？** 全リクエストで DB ヒットするのは高負荷時のボトルネックになりやすいので、本番では **Redis や Memcached** のようなインメモリ KVS をセッションストアに使うのが定石です。Express の `express-session` も標準ストアは MemoryStore（プロセスローカル）で、本番には `connect-redis` 等を組み合わせます。本教材では学習環境を増やさないために SQLite で代用しています。
 
 ---
 
-## 補足: httpOnly だけでは足りない
+## 補足: 攻撃の種類を切り分ける
 
-`httpOnly` は XSS で Cookie が JS から盗まれるのを防ぐためのフラグです。本レクチャーで起きている **「サーバーが Cookie の値そのものを信用してしまう」** 問題とは別物です。
+セッションまわりの攻撃は **「自分のセッションを偽る」** 系と **「他人のセッションを乗っ取る」** 系の2つに大きく分かれます。それぞれ防ぎ方が違うので、混ぜずに考えてください。
 
-`httpOnly` 付きで署名なしの Cookie に「ユーザー ID」を直書きしているだけなら、攻撃者は DevTools で値を見て直接書き換えるだけで済みます。JS からの読み書きを塞いでも、認証としては破綻しています。
+### 自分のセッションを偽る攻撃（本レクチャーの対応範囲）
 
-「JS から守る」と「サーバーが信用してよいか」は別の問題、と切り分けて考えてください。
+攻撃者が自分のブラウザの DevTools を開き、Cookie の値を別のユーザーのものに書き換えてリクエストを送る攻撃です。本レクチャーで実演したのがまさにこれで、`user_id=1` に書き換えるだけで管理者に化けられました。
 
-## 補足: サーバーサイドセッション／署名 Cookie／JWT の住み分け
+これは **「サーバーが Cookie の値そのものを信用している」** ことが原因なので、対策は **「Cookie にはランダムな ID だけを置き、ユーザーの実態はサーバー側で持つ」** ことです。Cookie を書き換えても、サーバー側ストアに該当 ID が無ければ未ログイン扱いになります。本レクチャーの TODO 3 で対応したのはこの問題です。
 
-ログイン状態を持たせる方式は実務では主に3つです。
+### 他人のセッション ID を盗み出す攻撃（`httpOnly` で防ぐもの）
 
-- **サーバーサイドセッション**：本レクチャーの正解。Cookie はランダム ID だけで、中身はサーバー（メモリや Redis）が持つ。古典的で堅い。スケールアウト時には共有ストア（Redis 等）が必要
-- **署名 Cookie**（HMAC 署名 + Cookie に小さな状態を載せる）：サーバーが状態を持たないので楽。ただし署名済みのトークンは **失効が難しい**（ログアウトしても、コピーされた Cookie はサーバー側からは無効化できない）
-- **JWT**：署名 Cookie の規格化版。普及している。同じく失効が難しいので、有効期限を短く設定 + リフレッシュトークン併用が前提になる
+サーバーサイドセッションに直しても、Cookie の中身（ランダムな session_id）を **他人のブラウザから盗まれて** しまえば、攻撃者はその ID をそのまま自分のブラウザに貼り付けて被害者になりすませます。盗む手段の代表が XSS で、`document.cookie` から JS で Cookie を読み取られます。
 
-方式は変わっても、共通の鉄則は変わりません。**「クライアントが書き換えられる値をサーバーが信用しない」** こと、これが認証における大原則です。
+これを防ぐのが `httpOnly` フラグです。`httpOnly` を付けると JS から `document.cookie` で読み書きできなくなるので、XSS で Cookie を抜かれにくくなります。
+
+注意点として、`httpOnly` は **「JS から Cookie を盗まれない」** ためのフラグであって、**「DevTools の Cookie エディタで書き換えられない」** ためのものではありません。本レクチャーの最初の攻撃（自分のセッションを偽る）は `httpOnly` が付いていても通ります。役割を取り違えないでください。
+
+## 補足: セッションの管理方法
+
+ログイン状態を持たせる方式は実務では主に3つです。どれを選んでも **「クライアントが書き換えられる値をサーバーが信用しない」** という大原則は変わりません。
+
+- **サーバーサイドセッション**
+- **署名 Cookie**
+- **JWT**
+
+### サーバーサイドセッション
+
+Cookie にはランダムな session_id だけを置き、ユーザー情報（user_id・権限・最終アクセス時刻など）はサーバー側のストアに `sessionId → 中身` で持つ方式です。Cookie が改ざんされてもストアに無ければ未ログイン扱いになり、ログアウト時はストアから消すだけで即座に失効できます。古典的で堅い反面、複数台にスケールアウトするときはストアを共有する必要があります。
+
+よく使われる技術:
+
+- セッションストア: **Redis**（最も一般的）、Memcached、RDB の `sessions` テーブル、Cookie ベースのフォールバックなど
+- ライブラリ: Node.js なら **express-session**、**iron-session**、Hono なら自前 Map か Redis クライアント、Rails なら **ActiveRecord::SessionStore** や **Redis::Store**、Django のデフォルトのデータベースバックエンド
+
+### 署名 Cookie
+
+Cookie に小さな状態（user_id 等）を載せ、サーバー秘密鍵による **HMAC 署名** を一緒に付けて改ざんを検知する方式です。サーバーが状態を持たないのでスケールが楽な反面、**失効が難しい** という弱点があります（ログアウトしても、攻撃者が事前にコピーしておいた Cookie はサーバー側から無効化できない）。
+
+よく使われる技術:
+
+- **Rails のデフォルトセッション**（`config.session_store :cookie_store`）
+- **Django の signed_cookies バックエンド**
+- Node.js の **cookie-session**、Hono の **Signed Cookies**（`getSignedCookie` / `setSignedCookie`）
+
+### JWT
+
+**JSON Web Token**（RFC 7519）。署名 Cookie の考え方を JSON ベースで規格化したもので、`Header.Payload.Signature` の3パートを `.` で連結した文字列を使います。Cookie だけでなく `Authorization: Bearer ...` ヘッダーで送ることも多く、フロントエンドとバックエンドが分離した SPA / モバイルアプリ / マイクロサービス間認証で広く使われています。
+
+署名 Cookie と同じく **失効が難しい** ため、有効期限を短く（例: アクセストークン 5〜15 分）設定し、**リフレッシュトークン** と組み合わせて使うのが前提です。
+
+よく使われる技術:
+
+- ライブラリ: Node.js の **jsonwebtoken**、**jose**、Hono の `hono/jwt`
+- 認証基盤: **Auth0**、**Firebase Authentication**、**AWS Cognito**、**Supabase Auth**、**Clerk** などが発行する ID トークン / アクセストークン
+- プロトコル: **OAuth 2.0** のアクセストークン、**OpenID Connect** の ID トークンの実体が JWT
 
 ## 次の章へ
 
