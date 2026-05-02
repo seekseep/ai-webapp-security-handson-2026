@@ -1,0 +1,21 @@
+{
+  "name": "ai-webapp-security-handson-docs",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "sync-lectures": "node scripts/sync-lectures.mjs",
+    "predev": "node scripts/sync-lectures.mjs",
+    "prebuild": "node scripts/sync-lectures.mjs"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.38.4",
+    "astro": "^6.2.1",
+    "sharp": "^0.34.0"
+  }
+}

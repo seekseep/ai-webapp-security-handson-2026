@@ -1,0 +1,69 @@
+---
+title: AI Webapp Security ハンズオン 2026
+description: Web アプリケーションのセキュリティとパフォーマンスを手を動かして学ぶハンズオン教材
+template: splash
+hero:
+  tagline: 動くアプリの「問題」を体験 → コードを読んで原因を特定 → 修正して挙動が変わることを確認する。AI 時代に必要な「コードを構造的に読む力」を身につけるハンズオン。
+  actions:
+    - text: 学習を始める
+      link: ./01-environment/01-environment/
+      icon: right-arrow
+      variant: primary
+    - text: GitHub で見る
+      link: https://github.com/seekseep/ai-webapp-security-handson-2026
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## このハンズオンについて
+
+各レクチャーのディレクトリには **意図的に問題が仕込まれた** Web アプリが入っています。アプリを起動して問題を体験し、コードを読んで原因を見つけ、修正するまでが各レクチャーの流れです。
+
+すべてのレクチャーは「社内ナレッジ共有ツール」を題材に、Hono + SQLite + Docker という最小スタックで動きます。各レクチャーは独立した npm プロジェクトです。
+
+:::caution[注意]
+学習用の教材です。**意図的にセキュリティ脆弱性が含まれている** ため、本番環境にデプロイしたり、修正前のコードを実環境に流用しないでください。
+:::
+
+## カリキュラム
+
+<CardGrid>
+  <LinkCard
+    title="01. 環境構築"
+    description="サンプルアプリを起動し、ディレクトリ構成と機能の全体像を把握する"
+    href="./01-environment/"
+  />
+  <LinkCard
+    title="02. 認証・認可"
+    description="認証なし / 不十分な認証 / 不十分な認可、3つの典型的な不備を直す"
+    href="./02-auth/"
+  />
+  <LinkCard
+    title="03. インジェクション"
+    description="SQL インジェクション / XSS / コマンドインジェクションを実際に成立させて直す"
+    href="./03-injection/"
+  />
+  <LinkCard
+    title="04. パフォーマンス"
+    description="N+1 / 大量データ / キャッシュ未活用、3つのよくある性能課題を直す"
+    href="./04-performance/"
+  />
+</CardGrid>
+
+## 進め方
+
+1. このリポジトリをクローン
+2. 取り組むレクチャーのディレクトリ（例: `sections/03-injection/01-sqli/`）に移動
+3. そのレクチャーの **README** で起動方法・前提を確認
+4. そのレクチャーの **LECTURE** に書かれている TODO を順番に進める
+5. 終わったら次のレクチャーへ
+
+## 対象者
+
+AI を使って Web アプリを作れるようにはなったが、生成されたコードの中身や安全性に不安がある初学者〜中級者を想定しています。
+
+- AI が出したコードをそのまま使ってよいか自信が持てない
+- 動いているように見えるが、本当に問題がないかを自分で確かめる手段を持っていない
+- アプリの構造を言葉で説明することに不慣れ

@@ -1,0 +1,28 @@
+# build output
+dist/
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# environment variables
+.env
+.env.production
+
+# macOS-specific files
+.DS_Store
+
+# jetbrains setting folder
+.idea/
+
+# generated lecture pages (synced from ../sections/)
+src/content/docs/01-environment/*/
+src/content/docs/02-auth/*/
+src/content/docs/03-injection/*/
+src/content/docs/04-performance/*/
