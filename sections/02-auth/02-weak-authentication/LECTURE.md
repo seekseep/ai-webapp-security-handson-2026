@@ -1,4 +1,15 @@
-# 03-02 - 不十分な認証
+---
+title: 不十分な認証
+docs: true
+---
+
+# 不十分な認証
+
+ログイン状態の保持に Cookie の `user_id` を直書きしている、**サーバーが Cookie の値そのものを認証情報として信用してしまっている** 状態を題材にします。
+
+一般ユーザー (`tanaka@example.com`) でログインしたあと、DevTools で `user_id` Cookie の値を `1` に書き換えてリロードするだけで、管理者 (`admin@example.com`) に化けて `/admin` まで開けてしまいます。パスワードも何も知らないまま、です。
+
+該当箇所は [app/middleware/session.js](./app/middleware/session.js) と [app/routes/auth.js](./app/routes/auth.js) で、サーバー側ストアを持たず、Cookie の値をそのまま `currentUser` を引くキーとして使っている構造になっています。「クライアントが書き換えられる値をサーバーが信用してよいか」という認証設計の根本に直結する、最もシンプルな失敗例を扱います。
 
 ## TODO
 

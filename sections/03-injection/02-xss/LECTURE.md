@@ -1,4 +1,15 @@
-# 02-02 - XSS（Stored XSS）
+---
+title: XSS（Stored XSS）
+docs: true
+---
+
+# XSS（Stored XSS）
+
+記事のコメント欄が、投稿された **HTML やスクリプトをそのままブラウザで実行してしまう** Stored XSS の状態を題材にします。
+
+ログイン後、適当な記事のコメント欄に `<script>alert('XSS')</script>` や `<img src="x" onerror="alert('XSS')">` を投稿すると、ページを開いた瞬間に `alert` が走ります。一度投稿された時点で、その記事を開いた **すべての閲覧者のブラウザで実行される** のが Stored XSS の特徴です。
+
+該当箇所は [app/routes/articles.js](./app/routes/articles.js) のコメント表示部分で、新着コメントに `[New]` バッジを付けるために `<span>...</span>` を `comment.body` と文字列結合 (`+`) で組み立て、その結果を `raw()` で描画する書き方になっています。`hono/html` のタグ付きテンプレートが本来やってくれるはずの自動エスケープが、`raw()` でくくった瞬間にユーザー入力ごと外れてしまっている例です。
 
 ## TODO
 

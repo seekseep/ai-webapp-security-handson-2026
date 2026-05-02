@@ -1,39 +1,73 @@
 #!/usr/bin/env node
 /**
- * sections/ 配下のマークダウンを単一情報源として、
- * docs-site/src/content/docs/ 配下のサイトページを生成する。
+ * リポジトリ全体のマークダウンから frontmatter に `docs: true` を持つものだけを
+ * 拾い、docs-site/src/content/docs/ 配下のサイトページを生成する。
  *
- * 同期対象:
- *   ROOT/README.md                            → docs/index.md             (/)
- *   sections/README.md                        → docs/getting-started.md   (/getting-started/)
- *   sections/LEGAL.md                         → docs/legal.md             (/legal/)
- *   sections/<sec>/README.md                  → docs/<sec>/index.md       (/<sec>/)
- *   sections/<sec>/<lec>/LECTURE.md           → docs/<sec>/<lec>/index.md (/<sec>/<lec>/)
- *   sections/<sec>/<lec>/README.md            → docs/<sec>/<lec>/readme.md(/<sec>/<lec>/readme/)
+ * 採用される source/destination の対応 (規約):
+ *   ROOT/README.md                  → docs/index.md             (/)
+ *   sections/README.md              → docs/getting-started.md   (/getting-started/)
+ *   sections/<name>.md              → docs/<name>.md            (/<name>/)        例: LEGAL.md → /legal/
+ *   sections/<sec>/README.md        → docs/<sec>/index.md       (/<sec>/)
+ *   sections/<sec>/<lec>/LECTURE.md → docs/<sec>/<lec>.md       (/<sec>/<lec>/)   サイドバーには 1 ファイルとして並ぶ
  *
- * 各出力は YAML フロントマター (title / description / sidebar / editUrl) を付与。
+ * frontmatter で title / sidebar.label / sidebar.order を上書きできる。
+ * sidebar.order は LECTURE.md に限り、ディレクトリ名 (`01-...`) からデフォルト値を導出する。
  * 本文中の相対リンクは:
- *   - 既知の単一情報源マークダウン → 対応するサイト URL (相対) に変換
+ *   - 同期対象のマークダウン → 対応するサイト URL (相対) に変換
  *   - sections/ 配下のソースコードや他リソース → GitHub blob URL に変換
  *   - リポジトリルート直下のファイル (TODO.md, AGENTS.md など) → GitHub blob URL に変換
  */
 
-import { mkdir, readdir, readFile, writeFile, rm, stat } from 'node:fs/promises';
+import { glob, mkdir, readdir, readFile, writeFile, rm, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..', '..');
-const SECTIONS_DIR = path.join(ROOT, 'sections');
 const DOCS_DIR = path.join(ROOT, 'docs-site', 'src', 'content', 'docs');
 const REPO = 'https://github.com/seekseep/ai-webapp-security-handson-2026';
 const MAX_FILE_BYTES = 200 * 1024;
+const PUBLISH_FLAG = 'docs';
 
-const SECTIONS = ['01-environment', '02-auth', '03-injection', '04-performance'];
+function parseScalar(val) {
+  if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+    return val.slice(1, -1);
+  }
+  if (val === 'true') return true;
+  if (val === 'false') return false;
+  if (val === 'null' || val === '~') return null;
+  if (/^-?\d+$/.test(val)) return Number(val);
+  return val;
+}
 
-function extractTitle(content) {
-  const match = content.match(/^#[ \t]+(.+?)\s*$/m);
-  return match ? match[1].trim() : 'Untitled';
+/**
+ * 簡易 YAML フロントマターパーサー。
+ * フラットなキーと、1 段ネストしたブロック (例: `sidebar: { order, label }`) のみを扱う。
+ */
+function parseFrontmatter(content) {
+  const m = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+  if (!m) return { data: {}, body: content };
+  const data = {};
+  let currentParent = null;
+  for (const line of m[1].split(/\r?\n/)) {
+    if (line.trim() === '') { currentParent = null; continue; }
+    const nested = line.match(/^[ \t]+([\w-]+):\s*(.*)$/);
+    if (nested && currentParent) {
+      data[currentParent][nested[1]] = parseScalar(nested[2].trim());
+      continue;
+    }
+    const top = line.match(/^([\w-]+):\s*(.*)$/);
+    if (!top) { currentParent = null; continue; }
+    const val = top[2].trim();
+    if (val === '') {
+      data[top[1]] = {};
+      currentParent = top[1];
+    } else {
+      data[top[1]] = parseScalar(val);
+      currentParent = null;
+    }
+  }
+  return { data, body: content.slice(m[0].length) };
 }
 
 function extractDescription(content) {
@@ -58,7 +92,7 @@ function extractDescription(content) {
 }
 
 function stripLeadingH1(content) {
-  return content.replace(/^#[ \t]+.+?(?:\r?\n)+/, '');
+  return content.replace(/^\s*#[ \t]+.+?(?:\r?\n)+/, '');
 }
 
 function parseLectureOrder(lecture) {
@@ -170,32 +204,24 @@ async function syncFile({
   sourceDir,
   sourceSiteUrl,
   outputFile,
-  sidebarOrder,
-  sidebarLabel,
+  defaultSidebarOrder,
   editPath,
-  required = true,
 }) {
-  let stats;
-  try {
-    stats = await stat(sourceFile);
-  } catch (e) {
-    if (e.code === 'ENOENT') {
-      if (required) {
-        console.warn(`[sync-lectures] missing required source: ${path.relative(ROOT, sourceFile)}`);
-      }
-      return;
-    }
-    throw e;
-  }
+  const stats = await stat(sourceFile);
   if (stats.size > MAX_FILE_BYTES) {
     console.warn(`[sync-lectures] skipping oversize: ${path.relative(ROOT, sourceFile)} (${stats.size} bytes)`);
     return;
   }
 
   const raw = await readFile(sourceFile, 'utf8');
-  const title = extractTitle(raw);
-  const description = extractDescription(raw);
-  const body = transformLinks(stripLeadingH1(raw), sourceDir, sourceSiteUrl);
+  const { data: srcFm, body: bodyAfterFm } = parseFrontmatter(raw);
+  const title = srcFm.title || '名称不明';
+  const description = srcFm.description || extractDescription(bodyAfterFm);
+  const body = transformLinks(stripLeadingH1(bodyAfterFm), sourceDir, sourceSiteUrl);
+
+  const sidebar = srcFm.sidebar || {};
+  const sidebarOrder = sidebar.order ?? defaultSidebarOrder;
+  const sidebarLabel = sidebar.label;
 
   const fm = buildFrontmatter({
     title,
@@ -222,94 +248,83 @@ async function cleanDocsDir() {
   }
 }
 
+/**
+ * source path (POSIX, ROOT 相対) から出力先・サイト URL・既定の sidebar order を導出する。
+ * 規約に当てはまらない場合は null を返し、呼び出し側で警告して skip する。
+ */
+function deriveDestination(srcRel) {
+  const parts = srcRel.split('/');
+  const file = parts[parts.length - 1];
+
+  if (srcRel === 'README.md') {
+    return { outputPath: 'index.md', slug: '/' };
+  }
+  if (srcRel === 'sections/README.md') {
+    return { outputPath: 'getting-started.md', slug: '/getting-started/' };
+  }
+  // sections/<name>.md (例: LEGAL.md → /legal/)
+  if (parts[0] === 'sections' && parts.length === 2) {
+    const name = file.replace(/\.md$/i, '').toLowerCase();
+    return { outputPath: `${name}.md`, slug: `/${name}/` };
+  }
+  // sections/<sec>(/<lec>...)/README.md → ディレクトリの index ページ
+  if (parts[0] === 'sections' && file === 'README.md' && parts.length >= 3) {
+    const inner = parts.slice(1, -1);
+    return {
+      outputPath: path.posix.join(...inner, 'index.md'),
+      slug: '/' + inner.join('/') + '/',
+    };
+  }
+  // sections/<sec>/<lec>/LECTURE.md → 親ディレクトリ直下の 1 ファイル
+  if (parts[0] === 'sections' && file === 'LECTURE.md' && parts.length >= 3) {
+    const inner = parts.slice(1, -1);
+    return {
+      outputPath: inner.join('/') + '.md',
+      slug: '/' + inner.join('/') + '/',
+      defaultSidebarOrder: parseLectureOrder(inner[inner.length - 1]),
+    };
+  }
+  return null;
+}
+
+async function findPublishableMarkdown() {
+  const it = glob('**/*.md', {
+    cwd: ROOT,
+    exclude: (rel) => rel === 'node_modules' || rel.startsWith('node_modules/')
+      || rel.startsWith('docs-site/') || rel.startsWith('.git/'),
+  });
+  const all = [];
+  for await (const rel of it) all.push(rel.split(path.sep).join('/'));
+  all.sort();
+
+  const result = [];
+  for (const rel of all) {
+    const raw = await readFile(path.join(ROOT, rel), 'utf8');
+    const { data } = parseFrontmatter(raw);
+    if (data[PUBLISH_FLAG] !== true) continue;
+    result.push(rel);
+  }
+  return result;
+}
+
 async function main() {
   await cleanDocsDir();
   await mkdir(DOCS_DIR, { recursive: true });
 
-  // ルート README → /
-  await syncFile({
-    sourceFile: path.join(ROOT, 'README.md'),
-    sourceDir: '',
-    sourceSiteUrl: '/',
-    outputFile: path.join(DOCS_DIR, 'index.md'),
-    sidebarOrder: 0,
-    editPath: 'README.md',
-  });
-
-  // sections/README → /getting-started/
-  await syncFile({
-    sourceFile: path.join(SECTIONS_DIR, 'README.md'),
-    sourceDir: 'sections',
-    sourceSiteUrl: '/getting-started/',
-    outputFile: path.join(DOCS_DIR, 'getting-started.md'),
-    sidebarOrder: 0,
-    sidebarLabel: 'はじめに',
-    editPath: 'sections/README.md',
-  });
-
-  // sections/LEGAL → /legal/
-  await syncFile({
-    sourceFile: path.join(SECTIONS_DIR, 'LEGAL.md'),
-    sourceDir: 'sections',
-    sourceSiteUrl: '/legal/',
-    outputFile: path.join(DOCS_DIR, 'legal.md'),
-    sidebarOrder: 99,
-    sidebarLabel: '注意事項',
-    editPath: 'sections/LEGAL.md',
-    required: false,
-  });
-
-  // 各セクション + そのレクチャー
-  for (const section of SECTIONS) {
-    // sections/<sec>/README → /<sec>/
+  for (const srcRel of await findPublishableMarkdown()) {
+    const dest = deriveDestination(srcRel);
+    if (!dest) {
+      console.warn(`[sync-lectures] no destination convention for ${srcRel} (skipped)`);
+      continue;
+    }
     await syncFile({
-      sourceFile: path.join(SECTIONS_DIR, section, 'README.md'),
-      sourceDir: `sections/${section}`,
-      sourceSiteUrl: `/${section}/`,
-      outputFile: path.join(DOCS_DIR, section, 'index.md'),
-      sidebarOrder: 0,
-      sidebarLabel: '概要',
-      editPath: `sections/${section}/README.md`,
+      sourceFile: path.join(ROOT, srcRel),
+      sourceDir: path.posix.dirname(srcRel),
+      sourceSiteUrl: dest.slug,
+      outputFile: path.join(DOCS_DIR, dest.outputPath),
+      defaultSidebarOrder: dest.defaultSidebarOrder,
+      editPath: srcRel,
     });
-
-    // レクチャー
-    let lectureNames = [];
-    try {
-      lectureNames = (await readdir(path.join(SECTIONS_DIR, section), { withFileTypes: true }))
-        .filter((d) => d.isDirectory())
-        .map((d) => d.name)
-        .sort();
-    } catch (e) {
-      if (e.code !== 'ENOENT') throw e;
-    }
-
-    for (const lecture of lectureNames) {
-      const lectureSrcDir = path.join(SECTIONS_DIR, section, lecture);
-      const lectureOutDir = path.join(DOCS_DIR, section, lecture);
-      const lectureOrder = parseLectureOrder(lecture);
-
-      // LECTURE.md → /<sec>/<lec>/
-      await syncFile({
-        sourceFile: path.join(lectureSrcDir, 'LECTURE.md'),
-        sourceDir: `sections/${section}/${lecture}`,
-        sourceSiteUrl: `/${section}/${lecture}/`,
-        outputFile: path.join(lectureOutDir, 'index.md'),
-        sidebarOrder: lectureOrder,
-        sidebarLabel: '解説',
-        editPath: `sections/${section}/${lecture}/LECTURE.md`,
-      });
-
-      // README.md → /<sec>/<lec>/readme/
-      await syncFile({
-        sourceFile: path.join(lectureSrcDir, 'README.md'),
-        sourceDir: `sections/${section}/${lecture}`,
-        sourceSiteUrl: `/${section}/${lecture}/readme/`,
-        outputFile: path.join(lectureOutDir, 'readme.md'),
-        sidebarOrder: 5,
-        sidebarLabel: '起動方法',
-        editPath: `sections/${section}/${lecture}/README.md`,
-      });
-    }
   }
 
   console.log('[sync-lectures] done');

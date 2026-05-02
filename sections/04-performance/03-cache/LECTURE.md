@@ -1,4 +1,15 @@
-# 04-03 - キャッシュ
+---
+title: キャッシュ
+docs: true
+---
+
+# キャッシュ
+
+ダッシュボード `/dashboard` が、**毎回ほぼ同じ集計結果を返すのに、リクエストごとにゼロから計算し直してしまっている** 状態を題材にします。
+
+管理者でログインして `/dashboard` を開くと、サーバーターミナルに `[dashboard] 912ms` のような行が出て、5 回連続でリロードしても毎回 900ms 前後かかり続けることが観測できます。
+
+該当箇所は [app/routes/dashboard.js](./app/routes/dashboard.js) で、リクエストごとに `comments` を JOIN・GROUP BY する重い集計クエリ (`topCommentedArticles` / `topCommenters`) が走っています。`comments` テーブルには 100 万行が入っており、`article_id` / `user_id` にインデックスも無いため、毎回 100 万行を舐めて集計し直しています。秒単位ではほとんど値が変わらない集計を、その都度律儀に再計算しているという無駄を扱います。
 
 ## TODO
 
