@@ -200,13 +200,16 @@ const articleTemplates = [
   },
 ];
 
-for (let i = 0; i < 4997; i++) {
-  const tpl = articleTemplates[i % articleTemplates.length];
-  const round = Math.floor(i / articleTemplates.length) + 1;
-  const title = round === 1 ? tpl.title : `${tpl.title}（再掲 ${round}）`;
-  const authorId = (i % 30) + 1;
-  insertArticle.run(title, tpl.body, authorId);
-}
+const insertManyArticles = db.transaction(() => {
+  for (let i = 0; i < 49997; i++) {
+    const tpl = articleTemplates[i % articleTemplates.length];
+    const round = Math.floor(i / articleTemplates.length) + 1;
+    const title = round === 1 ? tpl.title : `${tpl.title}（再掲 ${round}）`;
+    const authorId = (i % 30) + 1;
+    insertArticle.run(title, tpl.body, authorId);
+  }
+});
+insertManyArticles();
 
 const insertComment = db.prepare(
   'INSERT INTO comments (body, article_id, user_id) VALUES (?, ?, ?)'
