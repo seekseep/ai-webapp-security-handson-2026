@@ -21,6 +21,7 @@ export default defineConfig({
         { icon: 'github', label: 'GitHub', href: repoUrl },
       ],
       sidebar: [
+        { label: 'はじめに', link: '/getting-started/' },
         { label: '01. 環境構築', autogenerate: { directory: '01-environment' } },
         { label: '02. 認証・認可', autogenerate: { directory: '02-auth' } },
         { label: '03. インジェクション', autogenerate: { directory: '03-injection' } },

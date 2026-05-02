@@ -15,8 +15,5 @@ data/database.sqlite-wal
 docs-site/node_modules/
 docs-site/dist/
 docs-site/.astro/
-# sync-lectures.mjs が生成するレクチャーディレクトリ (各セクションの index.md は手書きなので残す)
-docs-site/src/content/docs/01-environment/*/
-docs-site/src/content/docs/02-auth/*/
-docs-site/src/content/docs/03-injection/*/
-docs-site/src/content/docs/04-performance/*/
+# sync-lectures.mjs が sections/ から生成するすべての content (単一情報源は sections/ 側)
+docs-site/src/content/docs/
