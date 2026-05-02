@@ -8,7 +8,7 @@
 
 ## 学ぶこと
 
-SQL インジェクションは **OWASP Top 10 の常連** で、入力値を文字列としてそのまま SQL に埋め込むと、攻撃者がクエリの意味を書き換えられてしまう脆弱性です。ログインバイパスはその代表例で、たった一行の入力でパスワードを知らずに管理者としてログインできてしまいます。
+SQL インジェクションは **[OWASP](https://owasp.org/www-chapter-japan/) Top 10 の常連** で、入力値を文字列としてそのまま SQL に埋め込むと、攻撃者がクエリの意味を書き換えられてしまう脆弱性です。ログインバイパスはその代表例で、たった一行の入力でパスワードを知らずに管理者としてログインできてしまいます。
 
 この章で身につけたい観点は次の2つです。
 
@@ -74,6 +74,21 @@ const user = db.prepare(
 **根本対策は「入力値を構造ではなくデータとして扱う」こと** です。プレースホルダはまさにそれを実現する仕組みなので、SQL を書くときは必ず使う、と覚えてください。
 
 ORM を使っていても、Raw SQL を発行する箇所には同じ注意が必要です。
+
+## 補足: ORM とは
+
+ORM（[Object-Relational Mapping](https://aws.amazon.com/jp/what-is/object-relational-mapping/)）は、リレーショナルデータベースのテーブル / レコードと、プログラム上のクラス / オブジェクトを対応付けて、SQL を直接書かずにデータを読み書きできるようにする仕組みです。多くの ORM はパラメータを安全にバインドしてくれるので、通常の使い方では SQL インジェクションを防いでくれます。ただし Raw SQL を発行する API（`query` / `raw` / `execute` など）は ORM の保護の外なので、文字列連結で組み立てると同じ脆弱性が発生します。
+
+主要言語ごとの代表的な ORM:
+
+- **JavaScript / TypeScript (Node.js)**: Prisma、Drizzle、TypeORM、Sequelize
+- **Python**: SQLAlchemy、Django ORM、Peewee
+- **Ruby**: Active Record（Rails）、Sequel
+- **PHP**: Eloquent（Laravel）、Doctrine
+- **Java / Kotlin**: Hibernate（JPA）、MyBatis、Exposed
+- **C# / .NET**: Entity Framework Core、Dapper
+- **Go**: GORM、Ent、sqlc
+- **Rust**: Diesel、SeaORM、SQLx
 
 ## 次の章へ
 

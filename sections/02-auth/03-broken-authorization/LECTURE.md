@@ -8,7 +8,7 @@
 
 ## 学ぶこと
 
-「ログインさえしていれば誰でもアクセスして良い」という実装は、**認証 (authentication) は通っているが認可 (authorization) が抜けている** 状態です。OWASP Top 10 でも **Broken Access Control** が連年首位という、現場で最も多いパターンの 1 つです。
+「ログインさえしていれば誰でもアクセスして良い」という実装は、**認証 (authentication) は通っているが認可 (authorization) が抜けている** 状態です。[OWASP](https://owasp.org/www-chapter-japan/) Top 10 でも **Broken Access Control** が連年首位という、現場で最も多いパターンの 1 つです。
 
 この章で身につけたい観点は次の通りです。
 
@@ -85,7 +85,7 @@ ${(isSelf || isAdmin) ? html`<p>メール: ${profile.email}</p>` : ''}
 - **認証 (authentication / authn)**：あなたが誰かを確かめる。ログイン処理がこれにあたる
 - **認可 (authorization / authz)**：あなたがそれをする権限があるかを確かめる。リソースの所有者かどうか、必要なロールを持っているかどうか
 
-「認証通ってるんだから OK」と認可を省くのが本レクチャーの罠です。OWASP Top 10 で **Broken Access Control** が連年首位なのは、ログインまでで満足する実装が今も多いからです。
+「認証通ってるんだから OK」と認可を省くのが本レクチャーの罠です。[OWASP](https://owasp.org/www-chapter-japan/) Top 10 で **Broken Access Control** が連年首位なのは、ログインまでで満足する実装が今も多いからです。
 
 ## 次の章へ
 
