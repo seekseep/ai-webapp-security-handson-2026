@@ -92,19 +92,61 @@ app.get('/', async (c) => {
   const user = c.get('user');
 
   const stats = await getOrLoad('dashboard:stats', 30_000, async () => {
-    // 元の集計クエリをここに移す
     const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
     const articleCount = db.prepare('SELECT COUNT(*) as count FROM articles').get();
     const commentCount = db.prepare('SELECT COUNT(*) as count FROM comments').get();
-    // ... recentArticles / topAuthors / topCommentedArticles / topCommenters も同様
+
+    const recentArticles = db.prepare(`
+      SELECT articles.title, users.name as author_name, articles.created_at
+      FROM articles
+      JOIN users ON articles.author_id = users.id
+      ORDER BY articles.created_at DESC
+      LIMIT 5
+    `).all();
+
+    const topAuthors = db.prepare(`
+      SELECT users.name, COUNT(articles.id) as article_count
+      FROM users
+      LEFT JOIN articles ON users.id = articles.author_id
+      GROUP BY users.id
+      ORDER BY article_count DESC
+      LIMIT 5
+    `).all();
+
+    const topCommentedArticles = db.prepare(`
+      SELECT articles.id, articles.title, COUNT(comments.id) as comment_count
+      FROM articles
+      LEFT JOIN comments ON comments.article_id = articles.id
+      GROUP BY articles.id
+      ORDER BY comment_count DESC, articles.id ASC
+      LIMIT 5
+    `).all();
+
+    const topCommenters = db.prepare(`
+      SELECT users.name, COUNT(comments.id) as comment_count
+      FROM users
+      LEFT JOIN comments ON comments.user_id = users.id
+      GROUP BY users.id
+      ORDER BY comment_count DESC, users.id ASC
+      LIMIT 5
+    `).all();
+
     return {
       userCount, articleCount, commentCount,
       recentArticles, topAuthors, topCommentedArticles, topCommenters,
     };
   });
 
+  const {
+    userCount, articleCount, commentCount,
+    recentArticles, topAuthors, topCommentedArticles, topCommenters,
+  } = stats;
+
   console.log(`[dashboard] ${Date.now() - t0}ms`);
-  // stats を分解して return c.html(...)
+
+  return c.html(layout('ダッシュボード', user, html`
+    <!-- 既存の HTML はそのまま。userCount / recentArticles などは stats から分解した変数を使う -->
+  `));
 });
 ```
 
